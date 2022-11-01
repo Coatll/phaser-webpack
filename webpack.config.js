@@ -54,6 +54,7 @@ module.exports = {
   },
   devServer: {
     static: path.resolve(__dirname, "./dist"),
+    open: true
   },
   plugins: [
     new CopyWebpackPlugin({
