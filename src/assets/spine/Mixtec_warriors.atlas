@@ -1,0 +1,139 @@
+
+Mixtec_warriors.png
+size: 256,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+breechCloth1a
+  rotate: false
+  xy: 1, 87
+  size: 36, 65
+  orig: 36, 65
+  offset: 0, 0
+  index: -1
+leg1b
+  rotate: false
+  xy: 77, 140
+  size: 35, 40
+  orig: 35, 40
+  offset: 0, 0
+  index: -1
+leg1a
+  rotate: false
+  xy: 222, 1
+  size: 30, 39
+  orig: 30, 39
+  offset: 0, 0
+  index: -1
+knee1
+  rotate: false
+  xy: 44, 143
+  size: 23, 24
+  orig: 23, 24
+  offset: 0, 0
+  index: -1
+foot2a
+  rotate: false
+  xy: 1, 154
+  size: 41, 21
+  orig: 41, 21
+  offset: 0, 0
+  index: -1
+footBb
+  rotate: false
+  xy: 114, 140
+  size: 20, 32
+  orig: 20, 32
+  offset: 0, 0
+  index: -1
+breechCloth1b
+  rotate: false
+  xy: 145, 101
+  size: 24, 62
+  orig: 24, 62
+  offset: 0, 0
+  index: -1
+bodyMan2a
+  rotate: false
+  xy: 39, 87
+  size: 36, 54
+  orig: 36, 54
+  offset: 0, 0
+  index: -1
+shield0a
+  rotate: false
+  xy: 89, 51
+  size: 54, 54
+  orig: 54, 54
+  offset: 0, 0
+  index: -1
+arm1b
+  rotate: false
+  xy: 44, 169
+  size: 31, 13
+  orig: 31, 13
+  offset: 0, 0
+  index: -1
+arm1a
+  rotate: false
+  xy: 222, 42
+  size: 33, 13
+  orig: 33, 13
+  offset: 0, 0
+  index: -1
+hand1a
+  rotate: false
+  xy: 1, 177
+  size: 20, 19
+  orig: 20, 19
+  offset: 0, 0
+  index: -1
+weapon1
+  rotate: false
+  xy: 145, 57
+  size: 97, 21
+  orig: 97, 21
+  offset: 0, 0
+  index: -1
+weapon2
+  rotate: false
+  xy: 145, 80
+  size: 104, 19
+  orig: 104, 19
+  offset: 0, 0
+  index: -1
+necklace1
+  rotate: false
+  xy: 77, 107
+  size: 47, 31
+  orig: 47, 31
+  offset: 0, 0
+  index: -1
+headMan1a
+  rotate: false
+  xy: 1, 1
+  size: 86, 84
+  orig: 86, 84
+  offset: 0, 0
+  index: -1
+helm1a
+  rotate: false
+  xy: 89, 1
+  size: 74, 48
+  orig: 74, 48
+  offset: 0, 0
+  index: -1
+hand1b
+  rotate: false
+  xy: 23, 177
+  size: 19, 20
+  orig: 19, 20
+  offset: 0, 0
+  index: -1
+shield1
+  rotate: false
+  xy: 165, 1
+  size: 55, 54
+  orig: 55, 54
+  offset: 0, 0
+  index: -1

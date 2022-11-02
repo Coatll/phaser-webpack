@@ -4,7 +4,7 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const package = require("./package.json");
 
 module.exports = {
-  entry: path.resolve(__dirname, "./src/js/index.ts"),
+  entry: path.resolve(__dirname, "./src/js/index.js"),
   module: {
     rules: [
       {
@@ -25,10 +25,10 @@ module.exports = {
           },
         ],
       },
-      {
+      /*{
         test: /\.json$/,
         loader: "json-loader",
-      },
+      },*/
     ],
   },
   optimization: {
@@ -44,7 +44,7 @@ module.exports = {
     },
   },
   resolve: {
-    extensions: [".js", ".ts"],
+    //extensions: [".js", ".ts"],
   },
   output: {
     path: path.resolve(__dirname, "./dist"),
