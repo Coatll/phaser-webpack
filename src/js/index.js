@@ -1,18 +1,21 @@
 import Phaser from 'phaser';
-//import Preloader from './scenes/Preloader.js';
+import Preloader from './scenes/Preloader.js';
 import Arena from './scenes/Arena.js';
 import * as SpinePlugin from './plugins/SpinePlugin.min.js';
 //import dragonBones from "./plugins/dragonBones";
 
 const config = {
   type: Phaser.AUTO,
+  parent: 'phaser-game',
+  backgroundColor: '#222222',
   scale: {
-    parent: 'phaser-game',
-    width: '100%', //800
-    height: '100%', //600
-    mode: Phaser.Scale.NONE,
-    //mode: Phaser.Scale.FIT,
-    //autoCenter: Phaser.DOM.CENTER_BOTH,
+    //width: '100%',
+    //height: '100%',
+    //mode: Phaser.Scale.NONE,
+    width: 1024,
+    height: 576,
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.DOM.CENTER_BOTH,
   },
 
   physics: {
@@ -26,7 +29,7 @@ const config = {
       { key: "DragonBones", plugin: dragonBones.phaser.plugin.DragonBonesScenePlugin, mapping: "dragonbone" }
     ],*/
   },
-  scene: [Arena]
+  scene: [Preloader]
 };
 
 const game = new Phaser.Game(config);

@@ -43,7 +43,7 @@ export default class Preloader extends Phaser.Scene {
 
     startGame() {
         //console.log('startGame');
-        this.gameSize = {x: 1024, y: 1024}
+        this.gameSize = {x: this.game.scale.width, y: this.game.scale.height};
         this.lang();
         //this.pads = this.scene.add('Pads', Pads, true, {x: 0, y: 0});
         this.startArena();
@@ -71,7 +71,8 @@ export default class Preloader extends Phaser.Scene {
   screenSize() {
       const screenW = this.scale.parent.clientWidth;
       const screenH = this.scale.parent.clientHeight;
-      return {x: screenW, y:screenH}
+      const size = {x: screenW, y: screenH};
+      return size;
   }
 
   //-----------------------------------resizing------------------------------------------
@@ -160,5 +161,98 @@ export default class Preloader extends Phaser.Scene {
         }
         return value;
     }
+
+    //----------------------------spine--------------------------------------------------
+
+    loadSpine(scene, key, jsonfile, atlas) {
+        //load spine to scene
+        var spLoader = scene.load.spine( key, jsonfile, atlas);
+        this.spData = spLoader.systems.spine.json.entries;
+        //console.log(this.spData);
+    }
+
+    addUpgraded(sc, x, y, key, anim, loop = false) {
+        this.upgradeSpineData(key);
+        return sc.add.spine(x, y, key, anim, loop);
+    }
+
+    upgradeSpineData(key) {
+        //upgrade skin data structure exported for older spine version
+        //call in create(), after loading and before adding to scene
+        if (!this.upgradeSpineSkins(key)) return;
+        this.upgradeSpineCurves(key);
+    }
+
+    upgradeSpineSkins(key) {
+        //upgrade skins data structure
+        var skins, skinsNew;
+        skins = this.spData.entries[key].skins;
+        if (skins[0]) {
+            console.warn(key + ' already upgraded');
+            return 0;
+        }
+        skinsNew = [
+            {"name":"default","attachments": skins['default']}
+        ]
+        this.spData.entries[key].skins = skinsNew;
+        return 1;
+    }
+
+    upgradeSpineCurves(key) {
+        //upgrade the data structure of animation curves 
+        //console.log('upgradeSpineCurves '+ key);
+        const anims = this.spData.entries[key].animations;
+        //console.log(anims);
+        for (var anim in anims)
+        if (anims.hasOwnProperty(anim)) {
+            //console.log(anims[anim]);
+            //console.log(anims[anim]['bones'])
+            for (var bone in anims[anim]['bones'])
+            if (anims[anim]['bones'].hasOwnProperty(bone)) {
+                //console.log(bone)
+                for (var action in anims[anim]['bones'][bone])
+                if (anims[anim]['bones'][bone].hasOwnProperty(action)) {
+                    for (var step in anims[anim]['bones'][bone][action])
+                    if (anims[anim]['bones'][bone][action].hasOwnProperty(step)) {
+                        //console.log(step)
+                        for (var entry in anims[anim]['bones'][bone][action][step])
+                        if (anims[anim]['bones'][bone][action][step].hasOwnProperty(entry)) {
+                            if (entry == "curve") {
+                                var step1 = anims[anim]['bones'][bone][action][step];
+                                entry = step1[entry];
+                                //console.log(entry);
+                                if (typeof entry == 'string') continue; // "curve": "stepped"
+                                //console.log(typeof entry)
+                                //if (typeof entry != 'array') {
+                                if (!entry.length) {
+                                    console.warn(key + ' curves already upgraded');
+                                    return 0;
+                                }
+                                if (entry.length != 4) {
+                                    console.warn(key + ' unexpected curve length');
+                                    return 0;
+                                }
+                                step1["c2"] = step1["curve"][1];
+                                step1["c3"] = step1["curve"][2];
+                                step1["c4"] = step1["curve"][3];
+                                step1["curve"] = step1["curve"][0];
+                                //console.log(anim + ' curve upgraded');   
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return 1;
+    }
+
+    /*upgradeAllSpineData() {
+        console.log(this.spData)
+        this.spData.forEach(element => {
+            this.upgradeSpineData(element);
+        });
+    }*/
+
+//--------------------------------------------------------------------------------------------------------------
 
 }
