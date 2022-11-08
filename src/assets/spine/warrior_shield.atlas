@@ -1,5 +1,5 @@
 
-Mixtec_warriors.png
+warrior_shield.png
 size: 256,256
 format: RGBA8888
 filter: Linear,Linear
@@ -83,7 +83,7 @@ arm1a
   index: -1
 hand1a
   rotate: false
-  xy: 22, 177
+  xy: 1, 177
   size: 20, 19
   orig: 20, 19
   offset: 0, 0
@@ -125,7 +125,7 @@ helm1a
   index: -1
 hand1b
   rotate: false
-  xy: 1, 177
+  xy: 23, 177
   size: 19, 20
   orig: 19, 20
   offset: 0, 0
@@ -135,5 +135,12 @@ shield1
   xy: 165, 1
   size: 55, 54
   orig: 55, 54
+  offset: 0, 0
+  index: -1
+blinkMale
+  rotate: false
+  xy: 126, 107
+  size: 16, 7
+  orig: 16, 7
   offset: 0, 0
   index: -1

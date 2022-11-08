@@ -1,3 +1,4 @@
+import { convertTypeAcquisitionFromJson } from 'typescript';
 import Destroyable from '../entities/Destroyable';
 import Skeletal from '../entities/Skeletal';
 
@@ -14,7 +15,7 @@ export default class Arena extends Phaser.Scene {
         this.load.image('fg', 'tresForeground.png');
         this.load.setPath('../../assets/spine/');
 
-        this.preloader.loadSpine(this, 'warrior', 'Mixtec_warriors.json', 'Mixtec_warriors.atlas');
+        this.preloader.loadSpine(this, 'warrior', 'warrior_shield.json', 'warrior_shield.atlas');
         //var spLoader = this.load.spine('warrior', 'Mixtec_warriors.json', 'Mixtec_warriors.atlas');
         //this.spData = spLoader.systems.spine.json.entries;
         //console.log(this.spData);
@@ -36,10 +37,9 @@ export default class Arena extends Phaser.Scene {
     create() {
         console.log('create arena');
         //console.log(this.preloader.screenSize());
-        //console.log(this.spData.entries['warrior']);
-        //this.upgradeSpineData('warrior')
-        //this.upgradeAllSpineData();
-        //var mar = this.add.image(200, 400, 'player');
+        this.minX = 20; this.maxX = this.preloader.gameSize - this.minX;
+        this.groundY = 510;
+
         this.arenaCenter = {x: this.preloader.gameSize.x / 2, y: this.preloader.gameSize.y / 2}
         this.background = this.add.image(this.arenaCenter.x, this.arenaCenter.y, 'bg');
         this.background.setOrigin(0.5, 0.5);
@@ -52,8 +52,9 @@ export default class Arena extends Phaser.Scene {
         this.entityGroup = this.add.group(); //group of moving entities
         //console.log(this.sys)
 
-        var warrior = this.createEntity(400, 510, 'warrior', 0);
-        var warrior2 = this.createEntity(800, 510, 'warrior', 3);
+        var warrior = this.createEntity(this.arenaCenter.x - 200, this.groundY, 'warrior', 0);
+        this.setAsPlayer(warrior, 1);
+        var warrior2 = this.createEntity(this.arenaCenter.x + 200, this.groundY, 'warrior', 3);
 
         //var warrior = this.preloader.addUpgraded(this, 400, 510, 'warrior', 'walk', false); //this.add.spine(400, 600, 'warrior', 'walk');
         //var warrior2 = this.add.spine(800, 500, 'warrior', 'block1', false);
@@ -68,7 +69,7 @@ export default class Arena extends Phaser.Scene {
         warrior2.setScale(-1, 1);
         //console.log(warrior2.state);
         warrior2.setAttachment('weapon1','weapon1'); //slotName, attachmentName
-        warrior2.play('block2', false, false) //name, loop, ignoreIfPlaying
+        //warrior2.play('block2', false, false) //name, loop, ignoreIfPlaying
         //warrior2.setMix('death1','walk', 0.9);
         //warrior.setMix('walk','block1', 0.5);
         //warrior.play('death2', false, false);
@@ -78,11 +79,12 @@ export default class Arena extends Phaser.Scene {
         //qu.forEach(() => {warrior.setEmptyAnimation(i++, i*1);});
         qu.forEach(name => {warrior.setAnimation(i++, name);});
         */
-        //console.log(warrior.state);
+        //console.log(warrior.skel.state);
         //warrior2.setAnimation(0, 'walk'); warrior2.setAnimation(1, 'attack1'); warrior2.setAnimation(2, 'hit1'); warrior2.setAnimation(3, 'death2');
         this.bgLayer.add(this.background);
         this.fgLayer.add(this.foreground);
 
+        this.cursors = this.input.keyboard.createCursorKeys();
     }
 
     createEntity(x, y, entityType, side) {
@@ -99,10 +101,11 @@ export default class Arena extends Phaser.Scene {
                 maxHealth: 100,
 
                 key: 'warrior',
-                anim: 'walk',
-                loop: false
+                anim: 'idle',
+                loop: true
             });
             this.battleLayer.add(e);
+            this.battleLayer.add(e.skel);
             this.entityGroup.add(e);
         return e;
     }
@@ -112,6 +115,38 @@ export default class Arena extends Phaser.Scene {
         if (number == 1) this.player = who;
         this['player'+number] = who;
         who.player = number;
+    }
+
+
+
+    update() {
+        this.testKeys();
+        this.entityGroup.children.iterate((child) => {this.entityUpdate(child)}, this);
+    }
+
+
+    testKeys() {
+        
+        if (this.cursors.left.isDown) {
+            this.player1.move(-1);
+        } else if (this.cursors.right.isDown)
+        {
+            this.player1.move(1);
+        }
+
+        if (!this.cursors.left.isDown && !this.cursors.right.isDown) {
+            this.player1.dontMove();
+        }
+    }
+
+    entityUpdate(e) {
+        if (e.dx) {
+            //console.log('setPosition ' + e.x + '+'+e.dx+ ', '+e.y +'+'+ e.dy);
+            e.setPosition(e.x + e.dx, e.y + e.dy);
+        }
+
+        //e.planNextIdle();
+
     }
 
 }

@@ -30,6 +30,7 @@ module.exports = {
         loader: "json-loader",
       },*/
     ],
+    noParse: [require.resolve('typescript/lib/typescript.js')],
   },
   optimization: {
     splitChunks: {

@@ -13,6 +13,11 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         this.dmg = config.dmg; //object's damage (or zero)
 
         this.health = this.maxHealth;
+        this.lockedMovement = false;
+        this.lockedAttack = false;
+        this.speed = 2.75;
+        this.state = 'idle';
+        this.dx = this.dy = 0;
 
         this.scene.add.existing(this);
     }
@@ -20,6 +25,13 @@ export default class Entity extends Phaser.GameObjects.Sprite {
     get isHostile() {
         return this.side > 1;
     }
+
+    /*update() {
+        if (this.dx) {
+            console.log('setPosition ' + this.x + '+'+this.dx+ ', '+this.y +'+'+ this.dy);
+            this.setPosition(this.x + this.dx, this.y + this.dy);
+        }
+    }*/
 
     //-------------------------health and death------------------------------
 
@@ -58,7 +70,37 @@ export default class Entity extends Phaser.GameObjects.Sprite {
     }
 
     //--------------------------------------------------------------------
+    //-------------------------------movement and animation--------------------------------------------------------
 
+    move(dirX) {
+        if (this.lockedMovement) return;
+        this.state = 'walk';
+        this.dx = dirX * this.speed;
+        if ((dirX >= 0) == (this.scaleX >=0)) this.play('walk', true);
+        else {
+            this.play('stepBack', true);
+            this.dx *= 0.6; //back slower
+        }
+    }
+
+    dontMove() {
+        if ((this.state != 'walk') && !this.dx) return;
+        if (this.state == 'walk') this.stopPlayingMovement();
+        this.state = 'idle';
+        //this.dx = 0;
+        let slowing = 0.5;
+        if (Math.abs(this.dx) < slowing) { this.dx = 0; return; }
+        this.dx = (Math.abs(this.dx) - slowing) * Math.sign(this.dx);
+        //this.stopPlayingMovement();
+    }
+
+    stopPlayingMovement() {
+        this.stop();
+    }
+
+    planNextIdle() {
+
+    }
 
 
 }
