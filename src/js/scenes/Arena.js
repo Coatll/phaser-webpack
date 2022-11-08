@@ -96,6 +96,7 @@ export default class Arena extends Phaser.Scene {
                 x: x,
                 y: y,
                 entityType: entityType,
+                weaponType: 'shield',
                 side: side,
                 dmg: 10,
                 maxHealth: 100,
@@ -132,6 +133,10 @@ export default class Arena extends Phaser.Scene {
         } else if (this.cursors.right.isDown)
         {
             this.player1.move(1);
+        }
+
+        if (this.cursors.space.isDown) {//ctrl!
+            this.player1.attack(2);
         }
 
         if (!this.cursors.left.isDown && !this.cursors.right.isDown) {

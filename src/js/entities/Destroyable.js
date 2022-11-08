@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 
+//destroyable graphic element/entity
+
 export default class Entity extends Phaser.GameObjects.Sprite {
     constructor(config) {
         if (!config.texture) config.texture = null;
@@ -100,6 +102,12 @@ export default class Entity extends Phaser.GameObjects.Sprite {
 
     planNextIdle() {
 
+    }
+
+    //---------------------------collision---------------------------------------
+
+    attackReach(attackType) {
+        return {minX: 0, maxX: 0}
     }
 
 

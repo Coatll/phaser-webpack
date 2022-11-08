@@ -1,6 +1,7 @@
 import Destroyable from './Destroyable';
 import Preloader from '../scenes/Preloader';
 import Phaser from 'phaser';
+import configData from '../config.js';
 
 export default class Skeletal extends Destroyable {
     constructor(config) {
@@ -18,14 +19,19 @@ export default class Skeletal extends Destroyable {
         this.skel = this.preloader.addUpgraded(this.scene, this.x, this.y, config.key, config.anim, config.loop = false)
         this.setPosition(config.x, config.y);
         //console.log(this.skel)
+        this.weaponType = config.weaponType; //['shield', '2handed', 'spear']
+        this.attacking = 0; //number of attack currently using, before hit resolution
         //this.setMixes();
         //console.log(this.skel.stateData)
-        this.skel.stateData.defaultMix = 0.2;
+        //this.skel.stateData.defaultMix = 0.2;
         this.nextIdle = null;
         this.stopPlayingMovement();
         this.skel.on('complete', this.onComplete, this); //after completing animation
 
         //possible states: ['idle', 'walk', 'attack1', 'attack2', 'attackClose', 'attackShield', 'hitShield1', 'hitShield2', 'hit1', 'hit2', 'death']
+        this.body = this.skel.findBone('body');
+        this.determineAttackTypes();
+        //console.log(this.bodyPosition());
     }
 
 //---------------------basic overrides-----------------------------------------------------
@@ -85,7 +91,7 @@ export default class Skeletal extends Destroyable {
         this.skel.play('');
     }*/
 
-//---------------------------------------------------------------------------------
+//-------------------------------other animations--------------------------------------------------
 
     setMixes() {
         //set transition times between animations
@@ -102,11 +108,24 @@ export default class Skeletal extends Destroyable {
         //this.clearTrack(0);
     }
 
-    onComplete() {
+    onComplete(e) {
+        const anim = e.animation;
+        if (e.trackIndex > 0) return; //only track 0 listened for changes
+        /*if (!anim) {
+            console.log('no anim complete');
+            return;
+        }*/
+        //if (anim.name == 'blink') console.log(e);
+        //console.log(e.trackIndex)
+        //console.log(anim)
+        //return;
         //console.log('complete')
+        
         //if not dying or hit...
         this.state = 'idle';
-        this.planNextIdle();
+        this.attacking = 0;
+        if (anim.name == '<empty>' || anim.name == 'idle') this.planNextIdle();
+        //problem: idles stop being continued after a timed attack
     }
 
     planNextIdle() {
@@ -129,5 +148,42 @@ export default class Skeletal extends Destroyable {
         if (otherAnims) this.setAnimation(1, otherAnims, false, true);
     }
 
+    //------------------------------------------actions-----------------------------------------------
 
+    determineAttackTypes() {
+        this.attackTypes = configData.attackTypes[this.weaponType];
+        //check if corresponding animations exist?
+    }
+
+    attack(attackTypeNum) {
+        if (this.attacking || this.lockedAttack) return 0;
+        console.log('attack '+attackTypeNum)
+        const attackType = this.attackTypes[attackTypeNum-1];
+        this.attacking = attackTypeNum;
+        this.state = attackType;
+        this.setAnimation(0, attackType, false);
+        return attackTypeNum;
+    }
+
+    //-----------------------------------------collision-----------------------------------------------
+
+    bodyPosition() {
+        return {
+            x: this.x + this.body.x,
+            y: this.y + this.body.y
+        }
+    }
+
+    attackReach(attackType) {
+        return attackReachFromX(this.bodyPosition().x, attackType);
+    }
+
+    attackReachFromX(x, attackType) {
+        var reach = {minX: 0, maxX: 0}
+        const scaleX = this.skel.scaleX;
+        const data = configData.attackData['shield'][attackType]
+        reach.minX = data.minX;
+        reach.maxX = data.maxX;
+        return reach;
+    }
 }

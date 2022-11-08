@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import Preloader from './scenes/Preloader.js';
-import Arena from './scenes/Arena.js';
+//import Arena from './scenes/Arena.js';
 import * as SpinePlugin from './plugins/SpinePlugin.min.js';
 //import dragonBones from "./plugins/dragonBones";
 
