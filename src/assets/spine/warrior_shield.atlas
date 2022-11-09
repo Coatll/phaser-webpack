@@ -83,16 +83,9 @@ arm1a
   index: -1
 hand1a
   rotate: false
-  xy: 22, 177
+  xy: 1, 177
   size: 20, 19
   orig: 20, 19
-  offset: 0, 0
-  index: -1
-weapon1
-  rotate: false
-  xy: 145, 57
-  size: 97, 21
-  orig: 97, 21
   offset: 0, 0
   index: -1
 weapon2
@@ -100,6 +93,13 @@ weapon2
   xy: 145, 80
   size: 104, 19
   orig: 104, 19
+  offset: 0, 0
+  index: -1
+weapon1
+  rotate: false
+  xy: 145, 57
+  size: 97, 21
+  orig: 97, 21
   offset: 0, 0
   index: -1
 necklace1
@@ -125,7 +125,7 @@ helm1a
   index: -1
 hand1b
   rotate: false
-  xy: 1, 177
+  xy: 23, 177
   size: 19, 20
   orig: 19, 20
   offset: 0, 0

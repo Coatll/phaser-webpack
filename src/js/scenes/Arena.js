@@ -1,6 +1,7 @@
 import { convertTypeAcquisitionFromJson } from 'typescript';
 import Destroyable from '../entities/Destroyable';
 import Skeletal from '../entities/Skeletal';
+import configData from '../config.js'
 
 export default class Arena extends Phaser.Scene {
     constructor () {
@@ -54,7 +55,7 @@ export default class Arena extends Phaser.Scene {
 
         var warrior = this.createEntity(this.arenaCenter.x - 200, this.groundY, 'warrior', 0);
         this.setAsPlayer(warrior, 1);
-        var warrior2 = this.createEntity(this.arenaCenter.x + 200, this.groundY, 'warrior', 3);
+        var warrior2 = this.tempEnemy = this.createEntity(this.arenaCenter.x + 200, this.groundY, 'warrior', 3);
 
         //var warrior = this.preloader.addUpgraded(this, 400, 510, 'warrior', 'walk', false); //this.add.spine(400, 600, 'warrior', 'walk');
         //var warrior2 = this.add.spine(800, 500, 'warrior', 'block1', false);
@@ -69,6 +70,7 @@ export default class Arena extends Phaser.Scene {
         warrior2.setScale(-1, 1);
         //console.log(warrior2.state);
         warrior2.setAttachment('weapon1','weapon1'); //slotName, attachmentName
+        this.debugAttack = 2; //1-4
         //warrior2.play('block2', false, false) //name, loop, ignoreIfPlaying
         //warrior2.setMix('death1','walk', 0.9);
         //warrior.setMix('walk','block1', 0.5);
@@ -118,13 +120,39 @@ export default class Arena extends Phaser.Scene {
         who.player = number;
     }
 
-
-
     update() {
         this.testKeys();
         this.entityGroup.children.iterate((child) => {this.entityUpdate(child)}, this);
+
+        //if (this.player1.dx) this.debugTestDistance(); //if movement, test distance
     }
 
+    goodAttackDistance(e1, e2, attackTypeNum) {
+        var attackType = configData.attackTypes['shield'][attackTypeNum-1];
+        var attackSpan = e1.attackReach(attackTypeNum);
+        var hitSpan = e2.hitSpan();
+        //console.log(attackSpan.minX+','+attackSpan.maxX+' vs '+hitSpan.minX+','+hitSpan.maxX);
+        /*
+        console.log('attack type '+attackTypeNum+'('+attackType+')'+'x-distance of bodies: '+(e2.bodyPosition().x-e1.bodyPosition().x)+
+        '. Needs to be between '+(attackSpan.minX - e1.x - e2.bodySizeX * Math.abs(e2.scaleX))+'-'+(attackSpan.maxX - e1.x + e2.bodySizeX * Math.abs(e2.scaleX)));
+        */
+
+        if ((attackSpan.maxX < hitSpan.minX) || (attackSpan.minX > hitSpan.maxX)) return false;
+        return true;
+    }
+
+    debugTestDistance() {
+        var v = false;
+        if (this.goodAttackDistance(this.player1, this.tempEnemy, this.debugAttack)) {
+            this.tempEnemy.skel.setColor(0xff0000);
+            v = true;
+        }
+        else {
+            this.tempEnemy.skel.setColor(0xffffff);
+        }
+        //console.log(v)
+        return v;
+    }
 
     testKeys() {
         
@@ -136,12 +164,33 @@ export default class Arena extends Phaser.Scene {
         }
 
         if (this.cursors.space.isDown) {//ctrl!
-            this.player1.attack(2);
+            this.attack(this.player1, this.debugAttack);
+            //this.player1.attack(this.debugAttack);
         }
 
         if (!this.cursors.left.isDown && !this.cursors.right.isDown) {
             this.player1.dontMove();
         }
+    }
+
+    attackResolveDelay(weaponType, attackTypeNum) {
+        //return configData
+        let v = configData.attackData[weaponType][attackTypeNum-1].resolveTime;
+        //console.log('attackResolveDelay '+weaponType+','+attackTypeNum+' = '+v);
+        return v;
+    }
+
+    attack(entity, attackTypeNum) {
+        entity.attack(attackTypeNum);
+        this.time.delayedCall(this.attackResolveDelay(entity.weaponType, attackTypeNum), this.resolveAttack, [entity], this);
+    }
+
+    resolveAttack(entity) {
+        console.log('resolveAttack');
+        let hit = this.debugTestDistance();
+        if (hit) {this.time.delayedCall(500, () => {this.tempEnemy.skel.setColor(0xffffff)}, [], this)}; //return the color back
+        entity.whenResolvedAttack();
+        //..
     }
 
     entityUpdate(e) {

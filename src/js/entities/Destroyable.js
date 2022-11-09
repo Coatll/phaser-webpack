@@ -74,13 +74,16 @@ export default class Entity extends Phaser.GameObjects.Sprite {
     //--------------------------------------------------------------------
     //-------------------------------movement and animation--------------------------------------------------------
 
-    move(dirX) {
+    move(dirX, speed, noAnim = false) {
         if (this.lockedMovement) return;
-        this.state = 'walk';
-        this.dx = dirX * this.speed;
-        if ((dirX >= 0) == (this.scaleX >=0)) this.play('walk', true);
+        if (!speed) speed = this.speed;
+        this.dx = dirX * speed;
+        if (!noAnim) this.state = 'walk';
+        if ((dirX >= 0) == (this.scaleX >=0)) {
+            if (!noAnim) this.play('walk', true);
+        }
         else {
-            this.play('stepBack', true);
+            if (!noAnim) this.play('stepBack', true);
             this.dx *= 0.6; //back slower
         }
     }
