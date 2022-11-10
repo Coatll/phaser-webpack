@@ -20,6 +20,7 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         this.speed = 2.75;
         this.state = 'idle';
         this.dx = this.dy = 0;
+        //this.advancing = [];
 
         this.scene.add.existing(this);
     }
@@ -103,14 +104,52 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         this.stop();
     }
 
+    /*startAdvancing(dxArray, dirX) {
+        //get an array to keep advancing frame by frame
+        //dirX = 1 or -1
+        this.advancing = [];
+        dirX *= 0.5;
+        for(var i = 1; i < dxArray.length; i++) {
+            this.advancing.push(dxArray[i] * dirX);
+        }
+        this.advancing.push(0);
+        console.log(this.advancing);
+    }
+
+    keepAdvancing() {
+        //on update
+        this.dx = this.advancing.splice(0, 1)[0];
+        //console.log(this.advancing);
+    }*/
+
     planNextIdle() {
 
     }
 
+    getHit() {
+        //... decrease health...
+        this.attacking = 0;
+        this.state = 'hit';
+        //...
+    }
+
     //---------------------------collision---------------------------------------
+
+    bodyPosition() {
+        //changed for descendants
+        return {
+            x: this.x,
+            y: this.y
+        }
+    }
 
     attackReach(attackType) {
         return {minX: 0, maxX: 0}
+    }
+
+    readyToBlock() {
+        //what attacks is the entity ready to block?
+        return [];
     }
 
 

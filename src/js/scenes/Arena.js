@@ -55,7 +55,7 @@ export default class Arena extends Phaser.Scene {
 
         var warrior = this.createEntity(this.arenaCenter.x - 200, this.groundY, 'warrior', 0);
         this.setAsPlayer(warrior, 1);
-        var warrior2 = this.tempEnemy = this.createEntity(this.arenaCenter.x + 200, this.groundY, 'warrior', 3);
+        var warrior2 = this.tempEnemy = this.createEntity(this.arenaCenter.x + 0, this.groundY, 'warrior', 3);
 
         //var warrior = this.preloader.addUpgraded(this, 400, 510, 'warrior', 'walk', false); //this.add.spine(400, 600, 'warrior', 'walk');
         //var warrior2 = this.add.spine(800, 500, 'warrior', 'block1', false);
@@ -70,7 +70,7 @@ export default class Arena extends Phaser.Scene {
         warrior2.setScale(-1, 1);
         //console.log(warrior2.state);
         warrior2.setAttachment('weapon1','weapon1'); //slotName, attachmentName
-        this.debugAttack = 2; //1-4
+        //this.debugAttack = 4; //1-4
         //warrior2.play('block2', false, false) //name, loop, ignoreIfPlaying
         //warrior2.setMix('death1','walk', 0.9);
         //warrior.setMix('walk','block1', 0.5);
@@ -87,6 +87,8 @@ export default class Arena extends Phaser.Scene {
         this.fgLayer.add(this.foreground);
 
         this.cursors = this.input.keyboard.createCursorKeys();
+        //console.log(this.cursors)
+        //this.input.keyboard.on('keydown', this.onKeyDown);
     }
 
     createEntity(x, y, entityType, side) {
@@ -127,6 +129,35 @@ export default class Arena extends Phaser.Scene {
         //if (this.player1.dx) this.debugTestDistance(); //if movement, test distance
     }
 
+    testKeys() {
+        
+        if (this.cursors.up.isDown) {
+            if (this.cursors.shift.isDown) this.attack(this.player1, 1);
+        }
+        else if (this.cursors.down.isDown) {
+            if (this.cursors.shift.isDown) this.attack(this.player1, 2);
+        }
+        else if (this.cursors.left.isDown) {
+            if (this.cursors.shift.isDown) this.attack(this.player1, 4);
+            else this.player1.move(-1);
+        }
+        else if (this.cursors.right.isDown) {
+            if (this.cursors.shift.isDown) this.attack(this.player1, 3);
+            else this.player1.move(1);
+        }
+
+        if (!this.cursors.left.isDown && !this.cursors.right.isDown) {
+            this.player1.dontMove();
+        }
+    }
+
+    /*onKeyDown(e) {
+        var key = e.key
+        console.log(key);
+    }*/
+
+//-----------------------attacks-------------------------------------------------
+
     goodAttackDistance(e1, e2, attackTypeNum) {
         var attackType = configData.attackTypes['shield'][attackTypeNum-1];
         var attackSpan = e1.attackReach(attackTypeNum);
@@ -141,7 +172,7 @@ export default class Arena extends Phaser.Scene {
         return true;
     }
 
-    debugTestDistance() {
+    /*debugTestDistance() {
         var v = false;
         if (this.goodAttackDistance(this.player1, this.tempEnemy, this.debugAttack)) {
             this.tempEnemy.skel.setColor(0xff0000);
@@ -152,24 +183,28 @@ export default class Arena extends Phaser.Scene {
         }
         //console.log(v)
         return v;
+    }*/
+
+    entityUpdate(e) {
+        //if (e.advancing.length) e.keepAdvancing();
+        if (e.dx) {
+            //console.log('setPosition ' + e.x + '+'+e.dx+ ', '+e.y +'+'+ e.dy);
+            e.setPosition(e.x + e.dx, e.y + e.dy);
+        }
+
+        this.testWorldBounds(e); //TODO: check only on movement
+        //e.planNextIdle();
+
     }
 
-    testKeys() {
-        
-        if (this.cursors.left.isDown) {
-            this.player1.move(-1);
-        } else if (this.cursors.right.isDown)
-        {
-            this.player1.move(1);
-        }
-
-        if (this.cursors.space.isDown) {//ctrl!
-            this.attack(this.player1, this.debugAttack);
-            //this.player1.attack(this.debugAttack);
-        }
-
-        if (!this.cursors.left.isDown && !this.cursors.right.isDown) {
-            this.player1.dontMove();
+    testWorldBounds(entity) {
+        const bodyPos = entity.bodyPosition();
+        const tooLeft = bodyPos.x >= 0 ? 0 : -bodyPos.x;
+        const tooRight = bodyPos.x <= this.preloader.gameSize.x ? 0 : this.preloader.gameSize.x - bodyPos.x;
+        if (tooLeft || tooRight) {
+            console.log('entity at '+bodyPos.x+' out of the world bounds. gamesize x '+this.preloader.gameSize.x);
+            entity.setPosition(entity.x + tooRight + tooLeft, entity.y);
+            //entity.skel.updateSize();
         }
     }
 
@@ -186,21 +221,30 @@ export default class Arena extends Phaser.Scene {
     }
 
     resolveAttack(entity) {
-        console.log('resolveAttack');
-        let hit = this.debugTestDistance();
-        if (hit) {this.time.delayedCall(500, () => {this.tempEnemy.skel.setColor(0xffffff)}, [], this)}; //return the color back
+        if (!entity.attacking) return 0;
+        //console.log('resolveAttack');
+        //let hit = this.debugTestDistance();
+        //if (hit) {this.time.delayedCall(500, () => {this.tempEnemy.skel.setColor(0xffffff)}, [], this)}; //return the color back
+        this.entityGroup.children.iterate((entity2) => {
+            if (entity2 == entity) return;
+            if (!this.goodAttackDistance(entity, entity2, entity.attacking)) return; //miss
+            if (entity2.blocking == entity.attacking) this.block(entity, entity2); //block
+                else this.harm(entity, entity2); //harm
+        })
         entity.whenResolvedAttack();
+        entity.attacking = 0;
         //..
     }
 
-    entityUpdate(e) {
-        if (e.dx) {
-            //console.log('setPosition ' + e.x + '+'+e.dx+ ', '+e.y +'+'+ e.dy);
-            e.setPosition(e.x + e.dx, e.y + e.dy);
-        }
-
-        //e.planNextIdle();
-
+    block(attacker, defender) {
+        //...
     }
+
+    harm(attacker, defender) {
+        defender.getHit(attacker);
+        //...
+    }
+
+//------------------------------------------------------------------------------------------
 
 }

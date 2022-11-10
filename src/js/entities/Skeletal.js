@@ -27,9 +27,11 @@ export default class Skeletal extends Destroyable {
         this.nextIdle = null;
         this.stopPlayingMovement();
         this.skel.on('complete', this.onComplete, this); //after completing animation
+        //this.skel.on('start', this.onStart, this); //
 
         //possible states: ['idle', 'walk', 'attack1', 'attack2', 'attackClose', 'attackShield', 'hitShield1', 'hitShield2', 'hit1', 'hit2', 'death']
         this.body = this.skel.findBone('body');
+        this.root = this.skel.findBone('root');
         this.bodySizeX = 25;
         this.determineAttackTypes();
         //console.log(this.bodyPosition());
@@ -61,11 +63,17 @@ export default class Skeletal extends Destroyable {
     }
 
     setAnimation(trackIndex, animationName, loop = undefined, ignoreIfPlaying = undefined) {
+        //this.alignSkeletonToItsBody();
         this.skel.setAnimation(trackIndex, animationName, loop, ignoreIfPlaying);
+        /*if (this.displacedX) {
+            this.setPosition(this.x + this.body.x * this.skel.scaleX, this.y);
+            this.displacedX = 0;
+        }*/
     }
 
     addAnimation(trackIndex, animationName, loop = undefined, delay = undefined) {
         //add animation to the queue
+        //this.alignSkeletonToItsBody();
         this.skel.addAnimation(trackIndex, animationName, loop, delay);
     }
 
@@ -113,7 +121,10 @@ export default class Skeletal extends Destroyable {
         const anim = e.animation;
         if (e.trackIndex > 0) return; //only track 0 listened for changes
 
+        //this.scene.testWorldBounds(this);
+
         //if (anim.name == 'attackShield') this.alignSkeletonToItsBody();
+        this.alignSkeletonToItsBody();
         /*if (!anim) {
             console.log('no anim complete');
             return;
@@ -130,6 +141,17 @@ export default class Skeletal extends Destroyable {
         if (anim.name == '<empty>' || anim.name == 'idle') this.planNextIdle();
         //problem: idles stop being continued after a timed attack
     }
+
+    /*onStart(e) {
+        console.log('onstart')
+        const anim = e.animation;
+        if (e.trackIndex > 0) return; //only track 0 listened for changes
+
+        if (this.displacedX) {
+            this.setPosition(this.x + this.body.x * this.skel.scaleX, this.y);
+            this.displacedX = 0;
+        }       
+    }*/
 
     planNextIdle() {
         //next idle animation
@@ -152,19 +174,24 @@ export default class Skeletal extends Destroyable {
         if (otherAnims) this.setAnimation(1, otherAnims, false, true);
     }
 
-    /*alignSkeletonToItsBody() {
+    alignSkeletonToItsBody() {
         //Change skeleton position according to body. (i.e. Save the body position where the animation displaced it.)
-        //not working
-        //console.log('alignSkeletonToItsBody: '+this.x+' to '+this.body.x);
+        //console.log('alignSkeletonToItsBody: '+this.x+' to '+this.body.x+', scalex '+this.skel.scaleX+'. root '+this.root.x);
         //console.log(this.body);
-        this.setPosition(this.x + this.body.x, this.y);
+        if (this.body.x == 0) return;
+        this.setPosition(this.x + this.body.x * this.skel.scaleX, this.y);
+        //this.displacedX = this.body.x * this.skel.scaleX;
+        //this.setAnimation(0, 'idle')
+        this.addAnimation(0, 'idle')
         this.body.x = 0;
+        //this.root.x = 0;
         //this.body.ax = 0;
         //console.log('aligned: skel '+this.x+', body '+this.body.x);
         //this.body.updateAppliedTransform();
-        this.skel.refresh();
+        //this.skel.refresh();
+        this.skel.updateSize();
         //console.log(this.body);
-    }*/
+    }
 
     //------------------------------------------actions-----------------------------------------------
 
@@ -176,27 +203,28 @@ export default class Skeletal extends Destroyable {
     attack(attackTypeNum) {
         if (this.attacking || this.lockedAttack) return 0;
         const attackType = this.attackTypes[attackTypeNum-1];
-        console.log('attack '+attackTypeNum +', '+attackType);
+        //console.log('attack '+attackTypeNum +', '+attackType);
         this.attacking = attackTypeNum;
         this.state = attackType;
         this.setAnimation(0, attackType, false);
 
         const attackData = configData.attackData[this.weaponType][this.attacking-1];
-        if (attackData.advance) this.move(Math.sign(this.scaleX), attackData.advance, true); //attackShield is advancing
+        //if (attackData.advance) this.move(Math.sign(this.scaleX), attackData.advance, true); //attackShield is advancing
         return attackTypeNum;
     }
 
     whenResolvedAttack() {
         //run class-specific behavior when attack resolved in the scene
+        //stop movement in case of advancing attack type
         const attackData = configData.attackData[this.weaponType][this.attacking-1];
-        if (attackData.advance) this.dontMove();
+        //if (attackData.advance) this.dontMove();
     }
 
     //-----------------------------------------collision-----------------------------------------------
 
     bodyPosition() {
         return {
-            x: this.x + this.body.x,
+            x: this.x + this.body.x * this.skel.scaleX,
             y: this.y + this.body.y
         }
     }
@@ -223,5 +251,30 @@ export default class Skeletal extends Destroyable {
         reach.maxX = x + data.maxX;
         //console.log(data);
         return reach;
+    }
+
+    readyToBlock() {
+        var ar = [];
+        if (this.state == 'idle') {
+            ar = [1, 2];
+        } else {
+            const cur = this.skel.getCurrentAnimation();
+            if (cur == 'hitShield1' || cur == 'block1') ar = 1;
+            else if (cur == 'hitShield2' || cur == 'block2') ar = 2;
+        }
+        return ar;
+    }
+
+    getHit(attacker) {
+        //console.log('getHit')
+        super.getHit();
+        var hitTypeNum = configData.attackData[this.weaponType][attacker.attacking-1]['hitType'];
+        if (hitTypeNum.length) hitTypeNum = hitTypeNum[Phaser.Math.RND.between(0, hitTypeNum.length-1)]; //if array, choose randomly
+        const anim = configData.hitTypes[hitTypeNum-1];
+        //console.log('hit with animation '+hitTypeNum+' = '+anim)
+        let cur = this.skel.getCurrentAnimation();
+        if (!cur || cur.name != anim) this.setAnimation(0, anim, false);
+        //this.addAnimation(0, 'idle');
+
     }
 }
