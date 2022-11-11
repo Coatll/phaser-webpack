@@ -11,6 +11,7 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         this.entityType = config.entityType;
         this.side = config.side; //0 = no side, 1 = player1, 2 = player2, 3 = players' enemy
         this.player = 0; //0 = no player control, 1 = player1, 2 = player2 
+        this.canAct = (config.canAct != false);
         this.maxHealth = config.maxHealth;
         this.dmg = config.dmg; //object's damage (or zero)
 
@@ -23,6 +24,8 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         //this.advancing = [];
 
         this.scene.add.existing(this);
+
+        this.enemies = [];
     }
 
     get isHostile() {
@@ -52,15 +55,20 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         //this.scene.time.delayedCall(500, this.checkDeath, [], this);
     }
 
-    checkDeath() {
-        if (!this.alive && !this.dying) {
-            this.startDying();
+    checkDeath(hitTypeNum) {
+        //console.log('checkDeath');
+        if (!this.alive && this.state != 'dying') {
+            this.startDying(hitTypeNum);
+            console.log('die!');
         }
+        //console.log('Death checked');
     }
 
-    startDying() {
-        this.dying = true;
-        this.play('Die'); //play death animation
+    startDying(hitTypeNum = 1) {
+        //this.dying = true;
+        console.log('destroyaebl startDying '+hitTypeNum);
+        this.state = 'dying';
+        this.play('death'); //play death animation
         //this.scene.planDeathEffect(this); //general death effect
         //this.tweenStatusFade.restart();
         //this.tweenFade.restart();
@@ -126,10 +134,16 @@ export default class Entity extends Phaser.GameObjects.Sprite {
 
     }
 
+    getWound(dmg) {
+
+    }
+
     getHit() {
         //... decrease health...
         this.attacking = 0;
         this.state = 'hit';
+        this.lockedAttack = true;
+        this.lockedMovement = true;
         //...
     }
 
@@ -152,5 +166,13 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         return [];
     }
 
+    //------------------------------AI------------------------------------------
 
+    findBestEnemy() {
+        this.bestEnemy = Phaser.Math.RND.pick(this.enemies);
+    }
+
+    decideAction() {
+
+    }
 }

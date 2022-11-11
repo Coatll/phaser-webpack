@@ -20,6 +20,10 @@ export default class Preloader extends Phaser.Scene {
         /*this.load.baseURL = 'src/assets/img/';
         this.load.multiatlas('atlas', 'atlas.json');
         this.load.multiatlas('atlas2', 'atlas2.json');*/
+
+        this.load.setPath('../../assets/images/');
+        this.load.image('block', 'block1.png');
+        this.load.image('circle', 'circle1.png');
     }
 
     create() {

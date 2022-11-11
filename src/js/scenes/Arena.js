@@ -1,4 +1,3 @@
-import { convertTypeAcquisitionFromJson } from 'typescript';
 import Destroyable from '../entities/Destroyable';
 import Skeletal from '../entities/Skeletal';
 import configData from '../config.js'
@@ -44,7 +43,7 @@ export default class Arena extends Phaser.Scene {
         this.arenaCenter = {x: this.preloader.gameSize.x / 2, y: this.preloader.gameSize.y / 2}
         this.background = this.add.image(this.arenaCenter.x, this.arenaCenter.y, 'bg');
         this.background.setOrigin(0.5, 0.5);
-        this.foreground = this.add.image(this.arenaCenter.x, this.preloader.gameSize.y + 20, 'fg').setOrigin(0.5, 1);
+        this.foreground = this.add.image(this.arenaCenter.x, this.preloader.gameSize.y - 0, 'fg').setOrigin(0.5, 1);
 
         this.bgLayer = this.add.layer();
         this.battleLayer = this.add.layer();
@@ -55,7 +54,8 @@ export default class Arena extends Phaser.Scene {
 
         var warrior = this.createEntity(this.arenaCenter.x - 200, this.groundY, 'warrior', 0);
         this.setAsPlayer(warrior, 1);
-        var warrior2 = this.tempEnemy = this.createEntity(this.arenaCenter.x + 0, this.groundY, 'warrior', 3);
+        var warrior2 = this.tempEnemy = this.createEntity(this.arenaCenter.x + 200, this.groundY, 'warrior', 3);
+        warrior2.setScale(-1, 1);
 
         //var warrior = this.preloader.addUpgraded(this, 400, 510, 'warrior', 'walk', false); //this.add.spine(400, 600, 'warrior', 'walk');
         //var warrior2 = this.add.spine(800, 500, 'warrior', 'block1', false);
@@ -67,10 +67,11 @@ export default class Arena extends Phaser.Scene {
             //slotName: 'hat', attachmentName: 'images/La_14'
         });*/
         //this.battleLayer.add([warrior, warrior2]);
-        warrior2.setScale(-1, 1);
+        
         //console.log(warrior2.state);
         warrior2.setAttachment('weapon1','weapon1'); //slotName, attachmentName
-        //this.debugAttack = 4; //1-4
+        //console.log(warrior2.player+','+warrior2.canAct)
+        this.debugAttack = 1; //1-4
         //warrior2.play('block2', false, false) //name, loop, ignoreIfPlaying
         //warrior2.setMix('death1','walk', 0.9);
         //warrior.setMix('walk','block1', 0.5);
@@ -89,6 +90,7 @@ export default class Arena extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         //console.log(this.cursors)
         //this.input.keyboard.on('keydown', this.onKeyDown);
+        this.findEnemiesForAll();
     }
 
     createEntity(x, y, entityType, side) {
@@ -102,7 +104,7 @@ export default class Arena extends Phaser.Scene {
                 entityType: entityType,
                 weaponType: 'shield',
                 side: side,
-                dmg: 10,
+                dmg: 100,
                 maxHealth: 100,
 
                 key: 'warrior',
@@ -126,24 +128,38 @@ export default class Arena extends Phaser.Scene {
         this.testKeys();
         this.entityGroup.children.iterate((child) => {this.entityUpdate(child)}, this);
 
-        //if (this.player1.dx) this.debugTestDistance(); //if movement, test distance
+        //if (this.player1.dx || this.tempEnemy.dx) this.debugTestDistance(this.tempEnemy, this.player1, true); //if movement, test distance
     }
 
     testKeys() {
         
         if (this.cursors.up.isDown) {
-            if (this.cursors.shift.isDown) this.attack(this.player1, 1);
+            if (this.cursors.shift.isDown) {
+                this.attack(this.player1, 1);
+                this.lastKeyExecuted = 1;
+            }
         }
         else if (this.cursors.down.isDown) {
-            if (this.cursors.shift.isDown) this.attack(this.player1, 2);
+            if (this.cursors.shift.isDown) {
+                this.attack(this.player1, 2);
+                this.lastKeyExecuted = 2;
+            }
         }
         else if (this.cursors.left.isDown) {
-            if (this.cursors.shift.isDown) this.attack(this.player1, 4);
+            if (this.cursors.shift.isDown) {
+                this.attack(this.player1, 4);
+                this.lastKeyExecuted = 4;
+            }
             else this.player1.move(-1);
         }
         else if (this.cursors.right.isDown) {
-            if (this.cursors.shift.isDown) this.attack(this.player1, 3);
+            if (this.cursors.shift.isDown) {
+                this.attack(this.player1, 3);
+                this.lastKeyExecuted = 3;
+            }
             else this.player1.move(1);
+        } else {
+            this.lastKeyExecuted = 0;
         }
 
         if (!this.cursors.left.isDown && !this.cursors.right.isDown) {
@@ -158,9 +174,11 @@ export default class Arena extends Phaser.Scene {
 
 //-----------------------attacks-------------------------------------------------
 
-    goodAttackDistance(e1, e2, attackTypeNum) {
+    attackDistanceMisplaced(e1, e2, attackTypeNum, includingStep = false) {
+        //-1 too left, 1 too righ, 0 = good distance
+        //includingStep = including the specific step before attack
         var attackType = configData.attackTypes['shield'][attackTypeNum-1];
-        var attackSpan = e1.attackReach(attackTypeNum);
+        var attackSpan = e1.attackReach(attackTypeNum, includingStep);
         var hitSpan = e2.hitSpan();
         //console.log(attackSpan.minX+','+attackSpan.maxX+' vs '+hitSpan.minX+','+hitSpan.maxX);
         /*
@@ -168,25 +186,28 @@ export default class Arena extends Phaser.Scene {
         '. Needs to be between '+(attackSpan.minX - e1.x - e2.bodySizeX * Math.abs(e2.scaleX))+'-'+(attackSpan.maxX - e1.x + e2.bodySizeX * Math.abs(e2.scaleX)));
         */
 
-        if ((attackSpan.maxX < hitSpan.minX) || (attackSpan.minX > hitSpan.maxX)) return false;
-        return true;
+        if (attackSpan.maxX < hitSpan.minX) return -1;
+        if (attackSpan.minX > hitSpan.maxX) return 1;
+        return 0;
     }
 
-    /*debugTestDistance() {
+    debugTestDistance(attacker, defender, includingStep) {
         var v = false;
-        if (this.goodAttackDistance(this.player1, this.tempEnemy, this.debugAttack)) {
-            this.tempEnemy.skel.setColor(0xff0000);
+        if (!this.attackDistanceMisplaced(attacker, defender, this.debugAttack, includingStep)) {
+            defender.setColor(0xff0000);
             v = true;
         }
         else {
-            this.tempEnemy.skel.setColor(0xffffff);
+            defender.setColor(0xffffff);
         }
         //console.log(v)
         return v;
-    }*/
+    }
 
     entityUpdate(e) {
         //if (e.advancing.length) e.keepAdvancing();
+        if (!e.player && e.canAct) e.decideAction();
+
         if (e.dx) {
             //console.log('setPosition ' + e.x + '+'+e.dx+ ', '+e.y +'+'+ e.dy);
             e.setPosition(e.x + e.dx, e.y + e.dy);
@@ -216,7 +237,8 @@ export default class Arena extends Phaser.Scene {
     }
 
     attack(entity, attackTypeNum) {
-        entity.attack(attackTypeNum);
+        if (this.lastKeyExecuted != attackTypeNum)
+            entity.attack(attackTypeNum);
         this.time.delayedCall(this.attackResolveDelay(entity.weaponType, attackTypeNum), this.resolveAttack, [entity], this);
     }
 
@@ -226,8 +248,8 @@ export default class Arena extends Phaser.Scene {
         //let hit = this.debugTestDistance();
         //if (hit) {this.time.delayedCall(500, () => {this.tempEnemy.skel.setColor(0xffffff)}, [], this)}; //return the color back
         this.entityGroup.children.iterate((entity2) => {
-            if (entity2 == entity) return;
-            if (!this.goodAttackDistance(entity, entity2, entity.attacking)) return; //miss
+            if ((entity2 == entity) || (entity2.state == 'dying')) return;
+            if (this.attackDistanceMisplaced(entity, entity2, entity.attacking)) return; //miss
             if (entity2.blocking == entity.attacking) this.block(entity, entity2); //block
                 else this.harm(entity, entity2); //harm
         })
@@ -241,8 +263,27 @@ export default class Arena extends Phaser.Scene {
     }
 
     harm(attacker, defender) {
+        //console.log('damage '+attacker.damage)
+        defender.getWound(attacker.damage, attacker.attacking);
         defender.getHit(attacker);
         //...
+    }
+
+//------------------------------AI-----------------------------------------------------------
+
+    findEnemiesForAll() {
+        this.entityGroup.children.iterate((entity) => {this.findEnemies(entity);})
+    }
+
+    findEnemies(entity) {
+        //generalized for any number of entities on the scene. Determining this.enemies and this.bestEnemy for the entity
+        if (entity.player) return; //only non-players
+        entity.enemies = [];
+        this.entityGroup.children.iterate((e) => {
+            if (e.side != entity.side) entity.enemies.push(e);
+        })
+        //console.log(entity.enemies);
+        entity.bestEnemy = entity.findBestEnemy();
     }
 
 //------------------------------------------------------------------------------------------
