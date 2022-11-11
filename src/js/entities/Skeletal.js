@@ -32,8 +32,8 @@ export default class Skeletal extends Destroyable {
         //this.skel.on('start', this.onStart, this); //
 
         //possible states: ['idle', 'walk', 'attack1', 'attack2', 'attackClose', 'attackShield', 'hitShield1', 'hitShield2', 'hit1', 'hit2', 'death']
-        this.body = this.skel.findBone('body');
-        this.root = this.skel.findBone('root');
+        this.bodyBone = this.skel.findBone('body');
+        //this.rootBone = this.skel.findBone('root');
         this.bodySizeX = 25;
         this.determineAttackTypes();
         //console.log(this.bodyPosition());
@@ -63,7 +63,7 @@ export default class Skeletal extends Destroyable {
         this.y = y;
         if (!this.skel) return;
         this.skel.setPosition(x, y);
-        if (!this.body) return;
+        if (!this.bodyBone) return;
         let bodyPosX = this.x;//this.bodyPosition().x;
         if (this.statusBar && (this.statusBar.x != bodyPosX)) {
             this.statusBar.updatePosition(bodyPosX);
@@ -86,7 +86,7 @@ export default class Skeletal extends Destroyable {
         //this.alignSkeletonToItsBody();
         this.skel.setAnimation(trackIndex, animationName, loop, ignoreIfPlaying);
         /*if (this.displacedX) {
-            this.setPosition(this.x + this.body.x * this.skel.scaleX, this.y);
+            this.setPosition(this.x + this.bodyBone.x * this.skel.scaleX, this.y);
             this.displacedX = 0;
         }*/
     }
@@ -141,7 +141,11 @@ export default class Skeletal extends Destroyable {
         const anim = e.animation;
         if (e.trackIndex > 0) return; //only track 0 listened for changes
 
-        if (this.state == 'dying') this.scene.time.delayedCall(500, this.die, [], this);
+        if (this.state == 'dying') {
+            //console.log('die at last!')
+            this.scene.time.delayedCall(500, this.die, [], this);
+            return;
+        }
 
         //this.scene.testWorldBounds(this);
 
@@ -172,7 +176,7 @@ export default class Skeletal extends Destroyable {
         if (e.trackIndex > 0) return; //only track 0 listened for changes
 
         if (this.displacedX) {
-            this.setPosition(this.x + this.body.x * this.skel.scaleX, this.y);
+            this.setPosition(this.x + this.bodyBone.x * this.skel.scaleX, this.y);
             this.displacedX = 0;
         }       
     }*/
@@ -200,21 +204,19 @@ export default class Skeletal extends Destroyable {
 
     alignSkeletonToItsBody() {
         //Change skeleton position according to body. (i.e. Save the body position where the animation displaced it.)
-        //console.log('alignSkeletonToItsBody: '+this.x+' to '+this.body.x+', scalex '+this.skel.scaleX+'. root '+this.root.x);
-        //console.log(this.body);
-        if (this.body.x == 0) return;
-        this.setPosition(this.x + this.body.x * this.skel.scaleX, this.y);
+        //console.log(this.bodyBone);
+        if (this.bodyBone.x == 0) return;
+        this.setPosition(this.x + this.bodyBone.x * this.skel.scaleX, this.y);
         //this.displacedX = this.body.x * this.skel.scaleX;
         //this.setAnimation(0, 'idle')
         this.addAnimation(0, 'idle')
-        this.body.x = 0;
-        //this.root.x = 0;
-        //this.body.ax = 0;
-        //console.log('aligned: skel '+this.x+', body '+this.body.x);
-        //this.body.updateAppliedTransform();
+        this.bodyBone.x = 0;
+        //this.bodyBone.ax = 0;
+        //console.log('aligned: skel '+this.x+', body '+this.bodyBone.x);
+        //this.bodyBone.updateAppliedTransform();
         //this.skel.refresh();
         this.skel.updateSize();
-        //console.log(this.body);
+        //console.log(this.bodyBone);
     }
 
     //------------------------------------------actions-----------------------------------------------
@@ -230,6 +232,7 @@ export default class Skeletal extends Destroyable {
         //console.log('attack '+attackTypeNum +', '+attackType);
         this.attacking = attackTypeNum;
         this.lockedAttack = true;
+        this.dx = 0;
         this.state = attackType;
         this.setAnimation(0, attackType, false);
 
@@ -243,6 +246,13 @@ export default class Skeletal extends Destroyable {
         //stop movement in case of advancing attack type
         const attackData = configData.attackData[this.weaponType][this.attacking-1];
         //if (attackData.advance) this.dontMove();
+    }
+
+    block(blockTypeNum) {
+        if (this.lockedMovement) return 0;
+        this.blocking = blockTypeNum;
+        this.state = 'block';
+        this.setAnimation(1, 'block'+blockTypeNum, false);
     }
 
     //-------------------------------------------------------------------------------------------------
@@ -261,8 +271,8 @@ export default class Skeletal extends Destroyable {
 
     bodyPosition() {
         return {
-            x: this.x + this.body.x * this.skel.scaleX,
-            y: this.y + this.body.y
+            x: this.x + this.bodyBone.x * this.skel.scaleX,
+            y: this.y + this.bodyBone.y
         }
     }
 
@@ -302,6 +312,7 @@ export default class Skeletal extends Destroyable {
 
     readyToBlock() {
         var ar = [];
+        if ((this.weaponType == '2handed') && (!this.defensiveGuard)) return ar; //2-handed is ready to block only in the defensive guard
         if (this.state == 'idle') {
             ar = [1, 2];
         } else {
@@ -320,20 +331,25 @@ export default class Skeletal extends Destroyable {
     }
 
     checkDeath(hitTypeNum) {
-        //console.log('checkDeath');
+        //console.log('checkDeath '+hitTypeNum);
         if (!this.alive && this.state != 'dying') {
             this.startDying(hitTypeNum);
-            console.log('die!');
         }
         //console.log('Death checked');
     }
 
     startDying(hitTypeNum) {
         //dying with specific anim
-        console.log('startDying '+hitTypeNum);
+        console.log('death'+hitTypeNum);
         this.state = 'dying';
-        this.setAnimation(0, 'death'+hitTypeNum); //play death animation
+        this.setAnimation(0, 'death'+hitTypeNum, false, false); //play death animation
         //this.scene.time.delayedCall(500, this.die, [], this);
+    }
+
+    die() {
+        this.skel.destroy();
+        this.statusBar.destroy();
+        this.destroy();
     }
 
     getHit(attacker) {
@@ -346,10 +362,6 @@ export default class Skeletal extends Destroyable {
         let cur = this.skel.getCurrentAnimation();
         if (!cur || cur.name != anim) this.setAnimation(0, anim, false);
         //this.addAnimation(0, 'idle');
-
-    }
-
-    startDying() {
 
     }
 
@@ -366,7 +378,7 @@ decideAction() {
         
         if (dir) this.move(dir);
         else this.dontMove();
-        this.scene.time.delayedCall(Phaser.Math.RND.between(300, 2000), () => {this.state = 'idle';}, [], this)
+        //this.scene.time.delayedCall(Phaser.Math.RND.between(300, 2000), () => {this.state = 'idle';}, [], this)
         this.state = 'planning';
     }
 }

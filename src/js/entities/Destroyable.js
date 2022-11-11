@@ -59,7 +59,7 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         //console.log('checkDeath');
         if (!this.alive && this.state != 'dying') {
             this.startDying(hitTypeNum);
-            console.log('die!');
+            console.log('die! (destroyable)');
         }
         //console.log('Death checked');
     }
@@ -144,6 +144,7 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         this.state = 'hit';
         this.lockedAttack = true;
         this.lockedMovement = true;
+        this.dx = 0;
         //...
     }
 

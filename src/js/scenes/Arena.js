@@ -104,7 +104,7 @@ export default class Arena extends Phaser.Scene {
                 entityType: entityType,
                 weaponType: 'shield',
                 side: side,
-                dmg: 100,
+                dmg: 10,
                 maxHealth: 100,
 
                 key: 'warrior',
@@ -236,6 +236,10 @@ export default class Arena extends Phaser.Scene {
         return v;
     }
 
+    block(entity, blockTypeNum) {
+        entity.block(blockTypeNum);
+    }
+
     attack(entity, attackTypeNum) {
         if (this.lastKeyExecuted != attackTypeNum)
             entity.attack(attackTypeNum);
@@ -264,8 +268,9 @@ export default class Arena extends Phaser.Scene {
 
     harm(attacker, defender) {
         //console.log('damage '+attacker.damage)
-        defender.getWound(attacker.damage, attacker.attacking);
         defender.getHit(attacker);
+        defender.getWound(attacker.damage, attacker.attacking);
+        
         //...
     }
 

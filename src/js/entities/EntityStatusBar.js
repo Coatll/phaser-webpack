@@ -63,4 +63,17 @@ export default class EntityStatusBar extends Phaser.GameObjects.Image {
         this.showHealthPoints(this.numPoints(this.owner.health - dmg));
     }
 
+    destroy() {
+        let le = this.circles.length;
+        do {
+            //console.log(le);
+            if (le <= 0) return;
+            let circle = this.circles.pop();
+            circle.destroy();
+            le = this.circles.length;
+        } while(le > 0);
+        this.setActive(false).setVisible(false);
+        this.destroy();
+    }
+
 }
