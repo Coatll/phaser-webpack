@@ -132,29 +132,43 @@ export default class Arena extends Phaser.Scene {
     }
 
     testKeys() {
+        var forwardAttack, backAttack;
+        if (this.player1.scaleX > 0) {
+            forwardAttack = 3;
+            backAttack = 4;
+        } else {
+            forwardAttack = 4;
+            backAttack = 3;
+        }
         
         if (this.cursors.up.isDown) {
             if (this.cursors.shift.isDown) {
                 this.attack(this.player1, 1);
-                this.lastKeyExecuted = 1;
+                //this.lastKeyExecuted = 1;
+            } else {
+                this.block(this.player1, 1);
             }
+            this.lastKeyExecuted = 1;
         }
         else if (this.cursors.down.isDown) {
             if (this.cursors.shift.isDown) {
                 this.attack(this.player1, 2);
-                this.lastKeyExecuted = 2;
+                //this.lastKeyExecuted = 2;
+            } else {
+                this.block(this.player1, 2);
             }
+            this.lastKeyExecuted = 2;
         }
         else if (this.cursors.left.isDown) {
             if (this.cursors.shift.isDown) {
-                this.attack(this.player1, 4);
+                this.attack(this.player1, backAttack);
                 this.lastKeyExecuted = 4;
             }
             else this.player1.move(-1);
         }
         else if (this.cursors.right.isDown) {
             if (this.cursors.shift.isDown) {
-                this.attack(this.player1, 3);
+                this.attack(this.player1, forwardAttack);
                 this.lastKeyExecuted = 3;
             }
             else this.player1.move(1);
@@ -164,6 +178,10 @@ export default class Arena extends Phaser.Scene {
 
         if (!this.cursors.left.isDown && !this.cursors.right.isDown) {
             this.player1.dontMove();
+        }
+
+        if (this.cursors.space.isDown) {
+            this.player1.flip();
         }
     }
 
@@ -186,8 +204,8 @@ export default class Arena extends Phaser.Scene {
         '. Needs to be between '+(attackSpan.minX - e1.x - e2.bodySizeX * Math.abs(e2.scaleX))+'-'+(attackSpan.maxX - e1.x + e2.bodySizeX * Math.abs(e2.scaleX)));
         */
 
-        if (attackSpan.maxX < hitSpan.minX) return -1;
-        if (attackSpan.minX > hitSpan.maxX) return 1;
+        if (attackSpan.maxX < hitSpan.minX) return attackSpan.maxX - hitSpan.minX; //-1
+        if (attackSpan.minX > hitSpan.maxX) return attackSpan.minX - hitSpan.maxX; //1
         return 0;
     }
 
@@ -205,12 +223,14 @@ export default class Arena extends Phaser.Scene {
     }
 
     entityUpdate(e) {
-        //if (e.advancing.length) e.keepAdvancing();
-        if (!e.player && e.canAct) e.decideAction();
 
+        if (e.canAct) {
+            e.testInstinct();                   //automatic reactions
+            if (!e.player) e.decideAction();    //AI
+        }
+        
         if (e.dx) {
-            //console.log('setPosition ' + e.x + '+'+e.dx+ ', '+e.y +'+'+ e.dy);
-            e.setPosition(e.x + e.dx, e.y + e.dy);
+            e.setPosition(e.x + e.dx, e.y + e.dy); //walking
         }
 
         this.testWorldBounds(e); //TODO: check only on movement
@@ -237,24 +257,36 @@ export default class Arena extends Phaser.Scene {
     }
 
     block(entity, blockTypeNum) {
-        entity.block(blockTypeNum);
+        if (this.lastKeyExecuted != blockTypeNum) {
+            console.log('block '+blockTypeNum)
+            entity.block(blockTypeNum);
+        }
     }
 
     attack(entity, attackTypeNum) {
-        if (this.lastKeyExecuted != attackTypeNum)
+        if (this.lastKeyExecuted != attackTypeNum) {
             entity.attack(attackTypeNum);
-        this.time.delayedCall(this.attackResolveDelay(entity.weaponType, attackTypeNum), this.resolveAttack, [entity], this);
+            this.time.delayedCall(this.attackResolveDelay(entity.weaponType, attackTypeNum), this.resolveAttack, [entity], this);
+        }
     }
 
     resolveAttack(entity) {
-        if (!entity.attacking) return 0;
-        //console.log('resolveAttack');
+        if (!entity.attacking) {
+            //console.log('no longer attacking');
+            return 0;
+        }
         //let hit = this.debugTestDistance();
         //if (hit) {this.time.delayedCall(500, () => {this.tempEnemy.skel.setColor(0xffffff)}, [], this)}; //return the color back
         this.entityGroup.children.iterate((entity2) => {
-            if ((entity2 == entity) || (entity2.state == 'dying')) return;
-            if (this.attackDistanceMisplaced(entity, entity2, entity.attacking)) return; //miss
-            if (entity2.blocking == entity.attacking) this.block(entity, entity2); //block
+            if ((entity2 == entity) || (entity2.state == 'dying')) {
+                return;
+            }
+            console.log('resolveAttack. attacking '+entity.attacking+', blocking '+entity2.blocking);
+            if (this.attackDistanceMisplaced(entity, entity2, entity.attacking)) {
+                console.log('missed');
+                return; //miss
+            }
+            if ((Math.sign(entity2.scaleX) != Math.sign(entity.scaleX)) && (entity2.blocking == entity.attacking)) this.resolveBlock(entity, entity2); //blocking and facing => block
                 else this.harm(entity, entity2); //harm
         })
         entity.whenResolvedAttack();
@@ -262,12 +294,12 @@ export default class Arena extends Phaser.Scene {
         //..
     }
 
-    block(attacker, defender) {
-        //...
+    resolveBlock(attacker, defender) {
+        console.log('blocked!');
     }
 
     harm(attacker, defender) {
-        //console.log('damage '+attacker.damage)
+        console.log('damage '+attacker.damage)
         defender.getHit(attacker);
         defender.getWound(attacker.damage, attacker.attacking);
         
@@ -282,7 +314,7 @@ export default class Arena extends Phaser.Scene {
 
     findEnemies(entity) {
         //generalized for any number of entities on the scene. Determining this.enemies and this.bestEnemy for the entity
-        if (entity.player) return; //only non-players
+        //if (entity.player) return; //only non-players
         entity.enemies = [];
         this.entityGroup.children.iterate((e) => {
             if (e.side != entity.side) entity.enemies.push(e);

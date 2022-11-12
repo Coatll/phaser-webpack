@@ -98,12 +98,20 @@ export default class Entity extends Phaser.GameObjects.Sprite {
     }
 
     dontMove() {
-        if ((this.state != 'walk') && !this.dx) return;
+        if ((this.state != 'walk') && !this.dx) {
+            //console.log('dontMov no')
+            return;
+        }
         if (this.state == 'walk') this.stopPlayingMovement();
-        this.state = 'idle';
+        //console.log('dontMov')
+        //this.state = 'idle';
         //this.dx = 0;
         let slowing = 0.5;
-        if (Math.abs(this.dx) < slowing) { this.dx = 0; return; }
+        if (Math.abs(this.dx) < slowing) { 
+            this.dx = 0; this.state = 'idle'; 
+            //console.log('now!')
+            return; 
+        }
         this.dx = (Math.abs(this.dx) - slowing) * Math.sign(this.dx);
         //this.stopPlayingMovement();
     }
@@ -134,6 +142,12 @@ export default class Entity extends Phaser.GameObjects.Sprite {
 
     }
 
+    flip() {
+        this.setScale(-this.scaleX, this.scaleY);
+    }
+
+//--------------------------------actions--------------------------------------------
+
     getWound(dmg) {
 
     }
@@ -141,6 +155,7 @@ export default class Entity extends Phaser.GameObjects.Sprite {
     getHit() {
         //... decrease health...
         this.attacking = 0;
+        this.blocking = 0;
         this.state = 'hit';
         this.lockedAttack = true;
         this.lockedMovement = true;

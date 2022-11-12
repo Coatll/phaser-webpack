@@ -84,6 +84,7 @@ export default class Skeletal extends Destroyable {
 
     setAnimation(trackIndex, animationName, loop = undefined, ignoreIfPlaying = undefined) {
         //this.alignSkeletonToItsBody();
+        //if (trackIndex == 0) this.clearTrack(1);
         this.skel.setAnimation(trackIndex, animationName, loop, ignoreIfPlaying);
         /*if (this.displacedX) {
             this.setPosition(this.x + this.bodyBone.x * this.skel.scaleX, this.y);
@@ -94,6 +95,7 @@ export default class Skeletal extends Destroyable {
     addAnimation(trackIndex, animationName, loop = undefined, delay = undefined) {
         //add animation to the queue
         //this.alignSkeletonToItsBody();
+        //if (trackIndex == 0) this.clearTrack(1);
         this.skel.addAnimation(trackIndex, animationName, loop, delay);
     }
 
@@ -129,17 +131,14 @@ export default class Skeletal extends Destroyable {
 
     stopPlayingMovement() {
         //console.log('stopPlayingMovement');
-        //this.skel.play('idle', false, false);
-        //this.skel.state.timeScale = 0;
         this.setEmptyAnimation(0, 0.2);
-        //this.setAnimation(0, 'attack1')
-        //this.setAnimation(3, 'blink')
-        //this.clearTrack(0);
+        //this.setAnimation(0, 'idle');
     }
 
     onComplete(e) {
         const anim = e.animation;
-        if (e.trackIndex > 0) return; //only track 0 listened for changes
+        //if (e.trackIndex > 0) return; //only track 0 listened for changes
+        if (e.trackIndex > 0) this.clearTrack(e.trackIndex);
 
         if (this.state == 'dying') {
             //console.log('die at last!')
@@ -160,10 +159,16 @@ export default class Skeletal extends Destroyable {
         //console.log(anim)
         //return;
         //console.log('complete')
-        
-        //if not dying or hit...
-        this.state = 'idle';
+        if (anim.name == 'flip') {
+            this.scaleX *= -1;
+            this.skel.scaleX *= -1;
+            //this.scene.time.delayedCall(200, this.move, [-this.scaleX], this)
+            //this.move(-this.scaleX);
+        }
+        else this.state = 'idle';
+
         this.attacking = 0;
+        this.blocking = 0;
         this.lockedAttack = false;
         this.lockedMovement = false;
         if (anim.name == '<empty>' || anim.name == 'idle') this.planNextIdle();
@@ -219,6 +224,15 @@ export default class Skeletal extends Destroyable {
         //console.log(this.bodyBone);
     }
 
+    flip() {
+        //animate flip and swap scale
+        if (this.lockedMovement) return 0;
+        this.lockedMovement = true;
+        this.lockedAttack = true;
+        this.state = 'flip';
+        this.addAnimation(0, 'flip');
+    }
+
     //------------------------------------------actions-----------------------------------------------
 
     determineAttackTypes() {
@@ -244,14 +258,17 @@ export default class Skeletal extends Destroyable {
     whenResolvedAttack() {
         //run class-specific behavior when attack resolved in the scene
         //stop movement in case of advancing attack type
-        const attackData = configData.attackData[this.weaponType][this.attacking-1];
+        //const attackData = configData.attackData[this.weaponType][this.attacking-1];
         //if (attackData.advance) this.dontMove();
     }
 
     block(blockTypeNum) {
+        console.log('block '+blockTypeNum)
         if (this.lockedMovement) return 0;
         this.blocking = blockTypeNum;
         this.state = 'block';
+        this.lockedAttack = true;
+        this.lockedMovement = true;
         this.setAnimation(1, 'block'+blockTypeNum, false);
     }
 
@@ -313,18 +330,21 @@ export default class Skeletal extends Destroyable {
     readyToBlock() {
         var ar = [];
         if ((this.weaponType == '2handed') && (!this.defensiveGuard)) return ar; //2-handed is ready to block only in the defensive guard
-        if (this.state == 'idle') {
+        const cur = this.skel.getCurrentAnimation();
+        if (this.state == 'idle' || (this.state == 'planning' && !this.lockedAttack) || this.state == 'walk') {
             ar = [1, 2];
         } else {
-            const cur = this.skel.getCurrentAnimation();
-            if (cur == 'hitShield1' || cur == 'block1') ar = 1;
-            else if (cur == 'hitShield2' || cur == 'block2') ar = 2;
+            //console.log(cur)
+            if (cur == 'hitShield1' || cur == 'block1') ar = [1];
+            else if (cur == 'hitShield2' || cur == 'block2') ar = [2];
         }
+        //console.log(ar);
         return ar;
     }
 
     getWound(dmg, attackTypeNum) {
         //decrease health...
+        if (dmg <= 0) return;
         this.statusBar.getWound(dmg);
         this.health -= dmg;
         this.checkDeath(configData.attackData[this.weaponType][attackTypeNum-1].hitType);
@@ -358,28 +378,118 @@ export default class Skeletal extends Destroyable {
         var hitTypeNum = configData.attackData[this.weaponType][attacker.attacking-1]['hitType'];
         if (hitTypeNum.length) hitTypeNum = hitTypeNum[Phaser.Math.RND.between(0, hitTypeNum.length-1)]; //if array, choose randomly
         const anim = configData.hitTypes[hitTypeNum-1];
+        const track = ((hitTypeNum == 3) || (hitTypeNum == 4)) ? 1 : 0; //shieldhit on the track 1
+        if (attacker.attacking == 3) {
+            //attack to shield is controlable
+            this.lockedAttack = false;
+            this.lockedMovement = false;
+            this.state = 'hitShield'; //only shield is hit
+        }
         //console.log('hit with animation '+hitTypeNum+' = '+anim)
         let cur = this.skel.getCurrentAnimation();
-        if (!cur || cur.name != anim) this.setAnimation(0, anim, false);
+        if (!cur || cur.name != anim) this.setAnimation(track, anim, false);
         //this.addAnimation(0, 'idle');
 
     }
 
 //--------------------------------AI----------------------------------------------------------------
 
-decideAction() {
-    //console.log('decideAction')
-    if (this.state == 'idle') {
-        //console.log(this.enemies);
+    facing(x) {
+        return (this.scaleX > 0) == (this.bodyPosition().x < x);
+    }
+
+    facingEnemy(enemy) {
+        return (this.scaleX > 0) == (this.bodyPosition().x < enemy.bodyPosition().x)
+    }
+
+    testInstinct() {
+        //automatic reactions - even for human player
         if (!this.bestEnemy) this.findBestEnemy();
         const enemy = this.bestEnemy;
         if (!enemy) return;
-        const dir = this.scene.attackDistanceMisplaced(this, enemy, 1, true) * -1;
-        
-        if (dir) this.move(dir);
-        else this.dontMove();
-        //this.scene.time.delayedCall(Phaser.Math.RND.between(300, 2000), () => {this.state = 'idle';}, [], this)
-        this.state = 'planning';
+
+        //test automatic block
+        const at = enemy.attacking;
+        if (!at) return;
+        if (this.blocking == at) return;
+        const ready = this.readyToBlock();
+        //console.log(ready);
+        //console.log(at);
+        if (ready.includes(at)) {
+            if (!this.scene.attackDistanceMisplaced(enemy, this, at)) {
+                console.log('ready to block '+at);
+                //console.log(ready);
+                this.block(at);
+            }
+        } else {
+            console.log('unable to block '+at)
+        }
     }
-}
+
+
+    attackDistances(enemy, includingStep = false) {
+        //all attackDistanceMisplaced
+        const attackData = configData.attackData[this.weaponType];
+        var d = [];
+        for (let i = 1; i <= attackData.length; i++) {
+            d.push(this.scene.attackDistanceMisplaced(this, enemy, i, includingStep));
+        }
+        return d;
+    }
+
+    bestAttack(enemy) {
+        const distances = this.attackDistances(enemy, true);
+        var bests = [];
+        var minDistance = 1000000;
+        var ready = enemy.readyToBlock();
+        if (!enemy.facingEnemy(this)) ready = [];
+        distances.forEach((d, i) => {
+            if (ready.includes(i+1)) return; //don't count attacks that the enemy is ready to block
+            if (i == 3 && enemy.state == 'hitShield') return; //don't bash the shield again
+            if (Math.abs(d) <= minDistance) {
+                minDistance = d;
+                if (Math.abs(d) == minDistance) {
+                    bests.push(i+1)
+                } else bests = [i+1];
+            }
+        });
+        if (!bests.length) {
+            console.warn('no best distance');
+            return null;
+        }
+        if (bests.length == 1) return bests[0];
+        return bests[Phaser.Math.RND.between(0, bests.length-1)]; //if more distances are best, pick one 
+    }
+
+    decideAction() {
+        //console.log('decideAction')
+        if (this.state == 'idle' || (this.dx && !this.lockedAttack)) {
+            //console.log(this.enemies);
+            if (!this.bestEnemy) this.findBestEnemy();
+            const enemy = this.bestEnemy;
+            if (!enemy) return;
+
+            if (!this.facingEnemy(enemy)) {
+                //console.log('flipping, because scaleX ='+this.scaleX+', x='+this.x+', enemy x='+enemy.x);
+                this.flip();
+                return;
+            }
+
+            const bestAttack = this.bestAttack(enemy);
+            console.log('best attack is '+bestAttack);
+            const dir = Math.sign(this.scene.attackDistanceMisplaced(this, enemy, bestAttack, true)) * -1;
+            if (dir) this.move(dir);
+            else {
+                if (this.dx) this.dontMove(); //is it neccessary?
+                else this.scene.attack(this, bestAttack);
+            }
+            this.scene.time.delayedCall(Phaser.Math.RND.between(300, 2000), this.readyForNextDecision, [], this)
+            this.state = 'planning';
+        }
+    }
+
+    readyForNextDecision() {
+        if (this.state == 'planning') this.state = 'idle';
+    }
+
 }
