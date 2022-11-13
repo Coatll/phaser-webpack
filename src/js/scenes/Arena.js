@@ -1,6 +1,7 @@
 import Destroyable from '../entities/Destroyable';
 import Skeletal from '../entities/Skeletal';
 import configData from '../config.js'
+import Preloader from './Preloader';
 
 export default class Arena extends Phaser.Scene {
     constructor () {
@@ -46,6 +47,7 @@ export default class Arena extends Phaser.Scene {
         this.foreground = this.add.image(this.arenaCenter.x, this.preloader.gameSize.y - 0, 'fg').setOrigin(0.5, 1);
 
         this.bgLayer = this.add.layer();
+        this.shadowLayer = this.add.layer();
         this.battleLayer = this.add.layer();
         this.fgLayer = this.add.layer();
 
@@ -91,6 +93,26 @@ export default class Arena extends Phaser.Scene {
         //console.log(this.cursors)
         //this.input.keyboard.on('keydown', this.onKeyDown);
         this.findEnemiesForAll();
+        this.end = 0;
+        /*
+        //rotate not working
+        this.sparks = this.add.particles('spark');
+        this.sparkEmitter = this.sparks.createEmitter({
+            //x: x,
+            //y: y,
+            //radial: true,
+            //angle: {start: 0, end: 360, step: 36},
+            //quantity: numMiddleClouds,
+            scale: {min: 0.5, max: 1},
+            speed: {min: 150, max: 200},
+            lifeSpan: 50,
+            angle: {random: [0, 360]},
+            rotate: {onEmit: (particle) => {return particle.angle} },
+            alpha: {start: 1, end: 0.3},
+            //tint: 0x333333,
+        });
+        */
+       this.cameras.main.fadeIn(200);
     }
 
     createEntity(x, y, entityType, side) {
@@ -104,7 +126,7 @@ export default class Arena extends Phaser.Scene {
                 entityType: entityType,
                 weaponType: 'shield',
                 side: side,
-                dmg: 10,
+                dmg: 20,
                 maxHealth: 100,
 
                 key: 'warrior',
@@ -132,6 +154,8 @@ export default class Arena extends Phaser.Scene {
     }
 
     testKeys() {
+        if (!this.player1) return;
+        if (this.end) return;
         var forwardAttack, backAttack;
         if (this.player1.scaleX > 0) {
             forwardAttack = 3;
@@ -229,9 +253,9 @@ export default class Arena extends Phaser.Scene {
             if (!e.player) e.decideAction();    //AI
         }
         
-        if (e.dx) {
+        //if (e.dx) {
             e.setPosition(e.x + e.dx, e.y + e.dy); //walking
-        }
+        //}
 
         this.testWorldBounds(e); //TODO: check only on movement
         //e.planNextIdle();
@@ -296,33 +320,133 @@ export default class Arena extends Phaser.Scene {
 
     resolveBlock(attacker, defender) {
         console.log('blocked!');
+        //this.sparkEmitter.explode(10, (attacker.x + defender.x) *0.5, attacker.y - 100);
+        this.sparkAnimation((attacker.bodyPosition().x + defender.x) *0.5, attacker.y - 130, 'block')
     }
 
     harm(attacker, defender) {
-        console.log('damage '+attacker.damage)
+        //console.log('damage '+attacker.damage)
+        if (attacker.damage <= 0) this.sparkAnimation((attacker.bodyPosition().x + defender.x) *0.5, attacker.y - 130, 'bash');
+        else {
+            const defPos = this.woundPosition(attacker.attackData(attacker.attacking).hitType, defender);
+            this.spillBlood(defPos.x, defPos.y, 6);
+        }
         defender.getHit(attacker);
         defender.getWound(attacker.damage, attacker.attacking);
         
         //...
     }
 
-//------------------------------AI-----------------------------------------------------------
-
-    findEnemiesForAll() {
-        this.entityGroup.children.iterate((entity) => {this.findEnemies(entity);})
+    woundPosition(hitType, defender) {
+        //either at the bottom of the body, or at the neck
+        console.log('woundPosition '+hitType)
+        const bodyPos = defender.bodyPosition();
+        const headPos = defender.headPosition();
+        let defPos = (hitType == 2 ? bodyPos 
+            :
+            {
+                x: headPos.x - 60 * defender.scaleX,
+                y: headPos.y - 40 * defender.scaleY,
+                //x: (bodyPos.x + headPos.x) * 0.5,
+                //y: (bodyPos.y + headPos.y) * 0.5,
+            }
+            );
+        return defPos;
     }
 
-    findEnemies(entity) {
+    cleanAfterDeath(entity) {
+        this.findEnemiesForAll(true);
+    }
+
+//------------------------------AI-----------------------------------------------------------
+
+    findEnemiesForAll(afterKill = false) {
+        this.entityGroup.children.iterate((entity) => {this.findEnemies(entity, afterKill);})
+        this.checkEnd();
+    }
+
+    findEnemies(entity, afterKill = false) {
         //generalized for any number of entities on the scene. Determining this.enemies and this.bestEnemy for the entity
         //if (entity.player) return; //only non-players
+        if (entity.state == 'dying') return;
         entity.enemies = [];
         this.entityGroup.children.iterate((e) => {
-            if (e.side != entity.side) entity.enemies.push(e);
+            if (e.side != entity.side && e.state != 'dying') entity.enemies.push(e);
         })
         //console.log(entity.enemies);
+        if (afterKill) {
+            //console.log('about to exult')
+            this.end = entity.side + 1;
+            entity.exult();
+        }
         entity.bestEnemy = entity.findBestEnemy();
     }
 
-//------------------------------------------------------------------------------------------
+//----------------------------effects--------------------------------------------------------------
+
+    sparkAnimation(x, y, type) {
+        //type: 'block' or 'bash'
+        const data = configData['sparkTypes'][type];
+        for(let n = data.number; n>0; n--) {
+            const length =  Phaser.Math.Between(data.length[0], data.length[1]);
+            const dur = data.duration;
+            const rot = Phaser.Math.Between(0, 360);
+            const dx = Math.cos(rot) * length;
+            const dy = Math.sin(rot) * length;
+            let spark = this.add.image(x + dx * 0.3, y + dy * 0.3, 'spark').setScale(data.scaleX, data.scaleY)
+            if (data.tint != undefined) spark.setTint(data.tint);
+            this.bgLayer.add(spark);
+            spark.rotation = rot;
+            this.tweens.add( {
+                targets: spark,
+                x: '+='+dx,
+                y: '+='+dy,
+                alpha: {from: data.alpha[0], to: data.alpha[1]},
+                duration: dur,
+                ease: 'Quad.easeOut',
+                onComplete: () => {spark.destroy()}
+            })
+        }
+    }
+
+    spillBlood(x, y, n) {
+        console.log('spill Blood '+x+','+y);
+        
+        const bloodStream = this.add.particles('blood');
+        const wound = this.add.image(x, y, 'blood');
+        const rect = new Phaser.Geom.Rectangle(0, 0, this.preloader.gameSize.x, this.preloader.gameSize.y);
+        const bloodFlow = bloodStream.createEmitter({
+            x:x,
+            y:y,
+            scale: 0.75,
+            speed: { min: 600, max: 800 },
+            angle: { min: 240, max: 300 },
+            //tint: 0xaa0000,
+            gravityY: 4000,
+            deathZone: { type: 'onLeave', source: rect }
+        });
+        bloodFlow.explode(n, x, y);
+        this.time.delayedCall(100, wound.destroy, [], wound);
+
+        /*const wound = this.add.image(x, y, 'circle').setTint(0xaa0000);
+        for(; n > 0; n--) {
+            const angle = Phaser.Math.Between(240, 300);
+            const speed = 30;
+            let drop = this.add.image(x, y, 'blood1'); 
+            this.tweens.add({
+                targets: drop,
+                y: this.preloader.gamesize,
+                ease: 'Quad.easeIn'
+            })
+        }*/
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    checkEnd() {
+        if (this.end) {
+            this.time.delayedCall(2500, this.cameras.main.fadeOut, [200], this.cameras.main)
+        }
+    }
 
 }

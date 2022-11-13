@@ -11,14 +11,14 @@ export default {
         "shield" : //attacks of shield-wearer + 1h weapon
             [{
                 //'attack1'
-                minX: 90, maxX: 145, //reach from the body position
+                minX: 100, maxX: 145, //reach from the body position
                 resolveTime: 160, //milliseconds to resolve the attack from the start
                 advance: 44,
                 hitType: 1, //which hit animation?
             },
             {
                 //'attack2'
-                minX: 80, maxX: 140,
+                minX: 90, maxX: 140,
                 resolveTime: 160,
                 advance: 44,
                 hitType: 2,
@@ -43,6 +43,25 @@ export default {
 
     "hitTypes" : ['hit1', 'hit2', 'hitShield1', 'hitShield2', 'death1', 'death2'],
 
-
+    "sparkTypes": {
+        'block' : {
+            number: 20,
+            tint: 0x000000,
+            scaleX: 0.5,
+            scaleY: 2,
+            length: [50, 60],
+            alpha: [0.8, 0.1],
+            duration: 200,
+        },
+        'bash' : {
+            number: 20,
+            //tint: 0x000000,
+            scaleX: 1,
+            scaleY: 1,
+            length: [30, 50],
+            alpha: [1, 0.8],
+            duration: 200,
+        }
+    }
 
 }

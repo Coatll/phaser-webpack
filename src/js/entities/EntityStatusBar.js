@@ -11,7 +11,7 @@ export default class EntityStatusBar extends Phaser.GameObjects.Image {
 
         this.scene.add.existing(this);  //(block1.png) background
         this.setTint(0x000000);
-        let circle = Preloader.getTextureAndFrame('circle');
+        //let circle = Preloader.getTextureAndFrame('circle');
 
         this.numCircles = this.numPoints(this.owner.maxHealth); //Math.floor(this.owner.maxHealth * 0.1);
         this.circles = [];

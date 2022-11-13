@@ -28,8 +28,14 @@ export default class Entity extends Phaser.GameObjects.Sprite {
         this.enemies = [];
     }
 
+    //--------------------------------------------------------------------------------------------
+
     get isHostile() {
         return this.side > 1;
+    }
+
+    attackData() {
+        //return cofigData.attackData....
     }
 
     /*update() {
@@ -76,6 +82,7 @@ export default class Entity extends Phaser.GameObjects.Sprite {
     }
 
     die() {
+        this.scene.cleanAfterDeath(this);
         this.destroy();
         //..?
     }
@@ -167,6 +174,13 @@ export default class Entity extends Phaser.GameObjects.Sprite {
 
     bodyPosition() {
         //changed for descendants
+        return {
+            x: this.x,
+            y: this.y
+        }
+    }
+
+    headPosition() {
         return {
             x: this.x,
             y: this.y

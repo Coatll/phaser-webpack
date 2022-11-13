@@ -24,6 +24,9 @@ export default class Preloader extends Phaser.Scene {
         this.load.setPath('../../assets/images/');
         this.load.image('block', 'block1.png');
         this.load.image('circle', 'circle1.png');
+        this.load.image('shadow', 'shadow1.png');
+        this.load.image('spark', 'spark.png');
+        this.load.image('blood', 'blood.png');
     }
 
     create() {
