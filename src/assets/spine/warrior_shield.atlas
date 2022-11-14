@@ -1,166 +1,215 @@
 
 warrior_shield.png
-size: 256,256
+size: 256,512
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
 breechCloth1a
   rotate: false
-  xy: 89, 81
+  xy: 105, 90
   size: 36, 65
   orig: 36, 65
   offset: 0, 0
   index: -1
 leg1b
   rotate: false
-  xy: 88, 148
+  xy: 213, 306
   size: 35, 40
   orig: 35, 40
   offset: 0, 0
   index: -1
 leg1a
   rotate: false
-  xy: 57, 87
+  xy: 107, 325
   size: 30, 39
   orig: 30, 39
   offset: 0, 0
   index: -1
 knee1
   rotate: false
-  xy: 226, 121
+  xy: 182, 325
   size: 23, 24
   orig: 23, 24
   offset: 0, 0
   index: -1
-foot2a
+knee2
   rotate: false
-  xy: 39, 176
-  size: 41, 21
-  orig: 41, 21
+  xy: 107, 366
+  size: 23, 24
+  orig: 23, 24
   offset: 0, 0
   index: -1
-footBb
+foot2b
   rotate: false
-  xy: 82, 190
+  xy: 77, 194
   size: 20, 32
   orig: 20, 32
   offset: 0, 0
   index: -1
+foot2a
+  rotate: false
+  xy: 139, 325
+  size: 41, 21
+  orig: 41, 21
+  offset: 0, 0
+  index: -1
 breechCloth1b
   rotate: false
-  xy: 220, 57
+  xy: 217, 170
   size: 24, 62
   orig: 24, 62
   offset: 0, 0
   index: -1
+bodyMan1a
+  rotate: false
+  xy: 1, 300
+  size: 38, 55
+  orig: 38, 55
+  offset: 0, 0
+  index: -1
 bodyMan2a
   rotate: false
-  xy: 1, 143
+  xy: 213, 250
   size: 36, 54
   orig: 36, 54
   offset: 0, 0
   index: -1
 vzzum
   rotate: false
-  xy: 125, 173
+  xy: 139, 348
   size: 32, 27
   orig: 32, 27
   offset: 0, 0
   index: -1
 shield0a
   rotate: false
-  xy: 1, 87
+  xy: 58, 250
   size: 54, 54
   orig: 54, 54
   offset: 0, 0
   index: -1
 arm1b
   rotate: false
-  xy: 36, 199
+  xy: 41, 339
   size: 31, 13
   orig: 31, 13
   offset: 0, 0
   index: -1
 arm1a
   rotate: false
-  xy: 1, 199
+  xy: 217, 234
   size: 33, 13
   orig: 33, 13
   offset: 0, 0
   index: -1
 hand1a
   rotate: false
-  xy: 233, 147
+  xy: 207, 348
   size: 20, 19
   orig: 20, 19
   offset: 0, 0
   index: -1
-weapon2
-  rotate: false
-  xy: 127, 152
-  size: 104, 19
-  orig: 104, 19
-  offset: 0, 0
-  index: -1
 weapon1
   rotate: false
-  xy: 127, 129
+  xy: 114, 302
   size: 97, 21
   orig: 97, 21
   offset: 0, 0
   index: -1
+weapon2
+  rotate: false
+  xy: 1, 357
+  size: 104, 19
+  orig: 104, 19
+  offset: 0, 0
+  index: -1
+necklace2
+  rotate: false
+  xy: 172, 250
+  size: 39, 49
+  orig: 39, 49
+  offset: 0, 0
+  index: -1
 necklace1
   rotate: false
-  xy: 39, 143
+  xy: 41, 306
   size: 47, 31
   orig: 47, 31
   offset: 0, 0
   index: -1
-headMan1c
+headMan2a
   rotate: false
-  xy: 89, 1
-  size: 53, 78
-  orig: 53, 78
+  xy: 1, 90
+  size: 102, 102
+  orig: 102, 102
   offset: 0, 0
   index: -1
 headMan1a
   rotate: false
-  xy: 1, 1
+  xy: 155, 84
   size: 86, 84
   orig: 86, 84
   offset: 0, 0
   index: -1
-headMan1b
+headMan2c
   rotate: false
-  xy: 144, 1
-  size: 52, 76
-  orig: 52, 76
+  xy: 105, 170
+  size: 55, 78
+  orig: 55, 78
+  offset: 0, 0
+  index: -1
+headMan1c
+  rotate: false
+  xy: 162, 170
+  size: 53, 78
+  orig: 53, 78
   offset: 0, 0
   index: -1
 blinkMale
   rotate: false
-  xy: 57, 128
+  xy: 90, 306
   size: 16, 7
   orig: 16, 7
   offset: 0, 0
   index: -1
 helm1a
   rotate: false
-  xy: 144, 79
+  xy: 1, 194
   size: 74, 48
   orig: 74, 48
   offset: 0, 0
   index: -1
+helm2c
+  rotate: false
+  xy: 155, 1
+  size: 99, 81
+  orig: 99, 81
+  offset: 0, 0
+  index: -1
+helm2a
+  rotate: false
+  xy: 1, 1
+  size: 152, 87
+  orig: 152, 87
+  offset: 0, 0
+  index: -1
+helm1c
+  rotate: false
+  xy: 114, 250
+  size: 56, 50
+  orig: 56, 50
+  offset: 0, 0
+  index: -1
 hand1b
   rotate: false
-  xy: 198, 57
+  xy: 77, 228
   size: 19, 20
   orig: 19, 20
   offset: 0, 0
   index: -1
 shield1
   rotate: false
-  xy: 198, 1
+  xy: 1, 244
   size: 55, 54
   orig: 55, 54
   offset: 0, 0

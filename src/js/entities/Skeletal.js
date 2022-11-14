@@ -26,7 +26,7 @@ export default class Skeletal extends Destroyable {
         this.attacking = 0; //number of attack currently using, before hit resolution
         //this.setMixes();
         //console.log(this.skel.stateData)
-        //this.skel.stateData.defaultMix = 0.2;
+        //this.skel.stateData.defaultMix = 0.1; //breaks the alignSkeleton...
         this.nextIdle = null;
         this.stopPlayingMovement();
         this.skel.on('complete', this.onComplete, this); //after completing animation
@@ -52,6 +52,8 @@ export default class Skeletal extends Destroyable {
         this.shadow = this.scene.add.image(this.x, this.y, 'shadow');
         this.shadow.setScale(2.6, 0.6).setAlpha(0.5);
         this.scene.shadowLayer.add(this.shadow);
+
+        this.planDecision();
     }
 
 //---------------------basic overrides-----------------------------------------------------
@@ -88,6 +90,7 @@ export default class Skeletal extends Destroyable {
     }
 
     setAttachment(slotName, attachmentName) {
+        //console.log('setAttachment '+slotName+', '+attachmentName);
         this.skel.setAttachment(slotName, attachmentName);
     }
 
@@ -139,6 +142,69 @@ export default class Skeletal extends Destroyable {
         return v;
     }
 
+//-----------------------------------start--------------------------------------------------------
+
+    setCustomSkin(config, activate = true) {
+        this.skin = {};
+        this.skin.head = config.head;
+        this.skin.body = config.body;
+        this.skin.weapon1 = config.weapon1;
+        this.skin.helm = config.helm;
+        this.skin.knee = config.knee;
+        this.skin.necklace = config.necklace;
+        this.skin.shieldFront = config.shieldFront;
+        this.skin.foot1 = this.skin.foot2 = config.foot;
+        if (activate) this.activateCustomSkin();
+    }
+
+    activateCustomSkin() {
+        //display custom skin body parts. (This is not the predefined spine 'skin' element)
+        const parts0 = ['weapon'];
+        const parts1 = ['head', 'body', 'helm'];
+        const parts2 = ['shieldFront', 'necklace']; //,'forearm'] 
+        const parts3 = ['knee'];
+        const parts4 = ['foot'];
+        //different parts have different naming conventions
+        const optionalParts = ['helm', 'necklace', 'knee'] //,'forearm']
+        //activate defined parts:
+        parts0.forEach((part) => {
+            let bodyPart = this.skin[part];
+            if (bodyPart && bodyPart.length) this.setAttachment(part+'1', part+bodyPart); //skin part defined - display it
+        });
+        parts1.forEach((part) => {
+            let bodyPart = this.skin[part];
+            if (bodyPart && bodyPart.length) this.setAttachment(part, part+bodyPart+'a');
+            else if (optionalParts.includes(part)) this.setAttachment(part, null);
+        });
+        parts2.forEach((part) => {
+            let bodyPart = this.skin[part];
+            if (bodyPart && bodyPart.length) this.setAttachment(part, part+bodyPart);
+            else if (optionalParts.includes(part)) this.setAttachment(part, null);
+        });
+        parts3.forEach((part) => {
+            let bodyPart = this.skin[part];
+            if (bodyPart && bodyPart.length) {
+                this.setAttachment(part+'1', part+bodyPart);
+                this.setAttachment(part+'2', part+bodyPart);
+            } else if (optionalParts.includes(part)) {
+                this.setAttachment(part+'1', null);
+                this.setAttachment(part+'2', null);
+            }
+        });
+        parts4.forEach((part) => {
+            let bodyPart = this.skin[part];
+            if (bodyPart && bodyPart.length) {
+                this.setAttachment(part+'1', part+bodyPart+'a');
+                this.setAttachment(part+'2', part+bodyPart+'a');
+            }  else if (optionalParts.includes(part)) {
+                this.setAttachment(part+'1', null);
+                this.setAttachment(part+'2', null);
+            }               ;
+        });
+      
+    }
+
+
 //-------------------------------other animations--------------------------------------------------
 
     setMixes() {
@@ -167,22 +233,16 @@ export default class Skeletal extends Destroyable {
 
         //if (anim.name == 'attackShield') this.alignSkeletonToItsBody();
         this.alignSkeletonToItsBody();
-        /*if (!anim) {
-            console.log('no anim complete');
-            return;
-        }*/
-        //if (anim.name == 'blink') console.log(e);
-        //console.log(e.trackIndex)
-        //console.log(anim)
-        //return;
-        //console.log('complete')
+
         if (anim.name == 'flip') {
             this.scaleX *= -1;
             this.skel.scaleX *= -1;
             //this.scene.time.delayedCall(200, this.move, [-this.scaleX], this)
             //this.move(-this.scaleX);
         }
-        else this.state = 'idle';
+        //if (this.player)
+         this.state = 'idle'; 
+         //else this.state = 'planning';
 
         this.attacking = 0;
         this.blocking = 0;
@@ -226,17 +286,17 @@ export default class Skeletal extends Destroyable {
 
     alignSkeletonToItsBody(occupied = false) {
         //Change skeleton position according to body. (i.e. Save the body position where the animation displaced it.)
+        console.log('align')
         //console.log(this.bodyBone);
         if (this.bodyBone.x == 0) return;
         this.setPosition(this.x + this.bodyBone.x * this.skel.scaleX, this.y);
         //this.displacedX = this.body.x * this.skel.scaleX;
         //this.setAnimation(0, 'idle')
-        if (!occupied) this.addAnimation(0, 'idle')
+        if (!occupied) this.setAnimation(0, 'idle')
         this.bodyBone.x = 0;
         //this.bodyBone.ax = 0;
         //console.log('aligned: skel '+this.x+', body '+this.bodyBone.x);
         //this.bodyBone.updateAppliedTransform();
-        //this.skel.refresh();
         this.skel.updateSize();
         //console.log(this.bodyBone);
     }
@@ -248,6 +308,18 @@ export default class Skeletal extends Destroyable {
         this.lockedAttack = true;
         this.state = 'flip';
         this.addAnimation(0, 'flip');
+    }
+
+    turnFace(dir) {
+        if (!this.skin.head || !this.skin.helm) return;
+        let headFrame, helmFrame
+        if (!dir) { //face side to camera
+            headFrame = 'a'; helmFrame = 'c';
+        } else { //face to camera
+            headFrame = 'c'; helmFrame = 'c';
+        }
+        this.setAttachment('head', 'head'+this.skin.head+headFrame);
+        this.setAttachment('helm', 'helm'+this.skin.helm+helmFrame);
     }
 
     //------------------------------------------actions-----------------------------------------------
@@ -286,13 +358,15 @@ export default class Skeletal extends Destroyable {
         this.state = 'block';
         this.lockedAttack = true;
         this.lockedMovement = true;
-        this.setAnimation(1, 'block'+blockTypeNum, false);
+        this.setAnimation(0, 'block'+blockTypeNum, false); // (1, ...)
     }
 
     exult() {
         //console.log('exult')
         this.dx = 0;
-        this.scene.time.delayedCall(Phaser.Math.RND.between(600, 900), this.addAnimation, [0, 'exult'], this)
+        let delay = Phaser.Math.RND.between(600, 900);
+        this.scene.time.delayedCall(delay, this.addAnimation, [0, 'exult'], this);
+        this.scene.time.delayedCall(delay + 200, this.turnFace, [1], this);
         //this.addAnimation(0, 'exult');
     }
 
@@ -367,7 +441,7 @@ export default class Skeletal extends Destroyable {
             ar = [1, 2];
         } else {
             //console.log(cur)
-            if (cur == 'hitShield1' || cur == 'block1') ar = [1];
+            if (cur == 'hitShield1' || cur == 'block1') ar = [1, 4];
             else if (cur == 'hitShield2' || cur == 'block2') ar = [2];
         }
         //console.log(ar);
@@ -410,13 +484,15 @@ export default class Skeletal extends Destroyable {
     }
 
     getHit(attacker) {
+        //gethit animations
         //console.log('getHit')
         super.getHit();
         this.alignSkeletonToItsBody(true);
+        if (!this.facingEnemy(attacker)) this.setScale(-this.scaleX, this.scaleY);
         var hitTypeNum = configData.attackData[this.weaponType][attacker.attacking-1]['hitType'];
         if (hitTypeNum.length) hitTypeNum = hitTypeNum[Phaser.Math.RND.between(0, hitTypeNum.length-1)]; //if array, choose randomly
         const anim = configData.hitTypes[hitTypeNum-1];
-        const track = ((hitTypeNum == 3) || (hitTypeNum == 4)) ? 1 : 0; //shieldhit on the track 1
+        const track = ((hitTypeNum == 3) || (hitTypeNum == 4)) ? 0 : 0; //shieldhit on the track 1?
         if (attacker.attacking == 3) {
             //attack to shield is controlable
             this.lockedAttack = false;
@@ -501,7 +577,7 @@ export default class Skeletal extends Destroyable {
 
     decideAction() {
         //console.log('decideAction')
-        return;
+        //return;
         if (!this.lockedAttack && (this.state == 'idle' || this.dx)) {
             //console.log(this.enemies);
             if (!this.bestEnemy) this.findBestEnemy();
@@ -518,16 +594,24 @@ export default class Skeletal extends Destroyable {
             //console.log('best attack is '+bestAttack);
             const dir = Math.sign(this.scene.attackDistanceMisplaced(this, enemy, bestAttack, true)) * -1;
             if (dir) {
-                if (!this.lockedMovement)
+                if (!this.lockedMovement) {
+                    //this.alignSkeletonToItsBody();
                     this.move(dir);
+                }
             }
             else {
                 if (this.dx) this.dontMove(); //is it neccessary?
-                else this.scene.attack(this, bestAttack);
+                else {
+                    this.scene.attack(this, bestAttack);
+                }
             }
-            this.scene.time.delayedCall(Phaser.Math.RND.between(300, 2000), this.readyForNextDecision, [], this)
-            this.state = 'planning';
+            //this.planDecision();
         }
+    }
+
+    planDecision() {
+        this.scene.time.delayedCall(Phaser.Math.RND.between(300, 800), this.readyForNextDecision, [], this)
+        this.state = 'planning';
     }
 
     readyForNextDecision() {

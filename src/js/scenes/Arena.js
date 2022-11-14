@@ -59,33 +59,29 @@ export default class Arena extends Phaser.Scene {
         var warrior2 = this.tempEnemy = this.createEntity(this.arenaCenter.x + 200, this.groundY, 'warrior', 3);
         warrior2.setScale(-1, 1);
 
-        //var warrior = this.preloader.addUpgraded(this, 400, 510, 'warrior', 'walk', false); //this.add.spine(400, 600, 'warrior', 'walk');
-        //var warrior2 = this.add.spine(800, 500, 'warrior', 'block1', false);
-        /*let warrior2 = this.make.spine({
-            x: 800, y: 510, key: 'warrior', //'warrior.Warrior_shield', - impractical, DragonBones can't use multiple skeletons
-            scale: 1,
-            //skinName: 'square_Green',
-            animationName: 'block1', loop: false,
-            //slotName: 'hat', attachmentName: 'images/La_14'
-        });*/
-        //this.battleLayer.add([warrior, warrior2]);
+        warrior.setCustomSkin({
+            head: 'Man1',
+            body: 'Man2',
+            weapon: '2',
+            necklace: '1',
+            knee: '1',
+            helm: '1'
+        });
+
+        warrior2.setCustomSkin({
+            head: 'Man2',
+            body: 'Man1',
+            weapon: '1',
+            necklace: '2',
+            knee: '2',
+            helm: '2'
+        });
         
         //console.log(warrior2.state);
-        warrior2.setAttachment('weapon1','weapon1'); //slotName, attachmentName
-        //console.log(warrior2.player+','+warrior2.canAct)
-        this.debugAttack = 1; //1-4
-        //warrior2.play('block2', false, false) //name, loop, ignoreIfPlaying
-        //warrior2.setMix('death1','walk', 0.9);
-        //warrior.setMix('walk','block1', 0.5);
-        //warrior.play('death2', false, false);
-        /*
-        var qu = ['walk', 'walk', 'attack1', 'block1', 'attack2', 'hit1', 'block2', 'death2']
-        var i = 0;
-        //qu.forEach(() => {warrior.setEmptyAnimation(i++, i*1);});
-        qu.forEach(name => {warrior.setAnimation(i++, name);});
-        */
-        //console.log(warrior.skel.state);
-        //warrior2.setAnimation(0, 'walk'); warrior2.setAnimation(1, 'attack1'); warrior2.setAnimation(2, 'hit1'); warrior2.setAnimation(3, 'death2');
+        //warrior2.setAttachment('weapon1','weapon1'); //slotName, attachmentName
+        //warrior2.setAttachment('head','headMan2a');
+        //this.debugAttack = 1; //1-4
+        
         this.bgLayer.add(this.background);
         this.fgLayer.add(this.foreground);
 
@@ -126,7 +122,7 @@ export default class Arena extends Phaser.Scene {
                 entityType: entityType,
                 weaponType: 'shield',
                 side: side,
-                dmg: 20,
+                dmg: 10,
                 maxHealth: 100,
 
                 key: 'warrior',
@@ -282,7 +278,7 @@ export default class Arena extends Phaser.Scene {
 
     block(entity, blockTypeNum) {
         if (this.lastKeyExecuted != blockTypeNum) {
-            console.log('block '+blockTypeNum)
+            //console.log('block '+blockTypeNum)
             entity.block(blockTypeNum);
         }
     }
@@ -305,9 +301,9 @@ export default class Arena extends Phaser.Scene {
             if ((entity2 == entity) || (entity2.state == 'dying')) {
                 return;
             }
-            console.log('resolveAttack. attacking '+entity.attacking+', blocking '+entity2.blocking);
+            //console.log('resolveAttack. attacking '+entity.attacking+', blocking '+entity2.blocking);
             if (this.attackDistanceMisplaced(entity, entity2, entity.attacking)) {
-                console.log('missed');
+                //console.log('missed');
                 return; //miss
             }
             if ((Math.sign(entity2.scaleX) != Math.sign(entity.scaleX)) && (entity2.blocking == entity.attacking)) this.resolveBlock(entity, entity2); //blocking and facing => block
@@ -326,9 +322,9 @@ export default class Arena extends Phaser.Scene {
 
     harm(attacker, defender) {
         //console.log('damage '+attacker.damage)
-        if (attacker.damage <= 0) this.sparkAnimation((attacker.bodyPosition().x + defender.x) *0.5, attacker.y - 130, 'bash');
+        if (attacker.damage <= 0) this.sparkAnimation((attacker.bodyPosition().x + defender.x) *0.5, attacker.y - 130, 'bash'); //sparks
         else {
-            const defPos = this.woundPosition(attacker.attackData(attacker.attacking).hitType, defender);
+            const defPos = this.woundPosition(attacker.attackData(attacker.attacking).hitType, defender); //blood
             this.spillBlood(defPos.x, defPos.y, 6);
         }
         defender.getHit(attacker);
