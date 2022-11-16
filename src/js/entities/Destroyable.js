@@ -90,16 +90,16 @@ export default class Entity extends Phaser.GameObjects.Sprite {
     //--------------------------------------------------------------------
     //-------------------------------movement and animation--------------------------------------------------------
 
-    move(dirX, speed, noAnim = false) {
+    move(dirX, speed, noStateChange = false) {
         if (this.lockedMovement) return;
         if (!speed) speed = this.speed;
         this.dx = dirX * speed;
-        if (!noAnim) this.state = 'walk';
+        if (!noStateChange) this.state = 'walk';
         if ((dirX >= 0) == (this.scaleX >=0)) {
-            if (!noAnim) this.play('walk', true);
+            this.play('walk', true);
         }
         else {
-            if (!noAnim) this.play('stepBack', true);
+            this.play('stepBack', true);
             this.dx *= 0.6; //back slower
         }
     }
@@ -197,6 +197,14 @@ export default class Entity extends Phaser.GameObjects.Sprite {
     }
 
     //------------------------------AI------------------------------------------
+
+    facing(x) {
+        return (this.scaleX > 0) == (this.bodyPosition().x < x);
+    }
+
+    facingEnemy(enemy) {
+        return (this.scaleX > 0) == (this.bodyPosition().x < enemy.bodyPosition().x)
+    }
 
     findBestEnemy() {
         this.bestEnemy = Phaser.Math.RND.pick(this.enemies);

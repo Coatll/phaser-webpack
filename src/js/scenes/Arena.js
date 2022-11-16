@@ -11,10 +11,10 @@ export default class Arena extends Phaser.Scene {
     preload() {
         console.log('preload arena');
         this.preloader = this.scene.get('Preloader');
-        this.load.setPath('../../assets/images/');
+        this.load.setPath('assets/images/');
         this.load.image('bg', 'tresCastillos.jpg'); //'tenochGray.jpg'
         this.load.image('fg', 'tresForeground.png');
-        this.load.setPath('../../assets/spine/');
+        this.load.setPath('assets/spine/');
 
         this.preloader.loadSpine(this, 'warrior', 'warrior_shield.json', 'warrior_shield.atlas');
         //var spLoader = this.load.spine('warrior', 'Mixtec_warriors.json', 'Mixtec_warriors.atlas');
@@ -54,8 +54,8 @@ export default class Arena extends Phaser.Scene {
         this.entityGroup = this.add.group(); //group of moving entities
         //console.log(this.sys)
 
-        var warrior = this.createEntity(this.arenaCenter.x - 200, this.groundY, 'warrior', 0);
-        this.setAsPlayer(warrior, 1);
+        var warrior = this.warrior1 = this.createEntity(this.arenaCenter.x - 200, this.groundY, 'warrior', 0);
+        //this.setAsPlayer(warrior, 1);
         var warrior2 = this.tempEnemy = this.createEntity(this.arenaCenter.x + 200, this.groundY, 'warrior', 3);
         warrior2.setScale(-1, 1);
 
@@ -90,6 +90,7 @@ export default class Arena extends Phaser.Scene {
         //this.input.keyboard.on('keydown', this.onKeyDown);
         this.findEnemiesForAll();
         this.end = 0;
+        this.addInstructions();
         /*
         //rotate not working
         this.sparks = this.add.particles('spark');
@@ -109,6 +110,55 @@ export default class Arena extends Phaser.Scene {
         });
         */
        this.cameras.main.fadeIn(200);
+    }
+
+    addInstructions() {
+        this.instructions = this.add.image(30, 30, 'instructions').setOrigin(0,0).setVisible(false);
+        this.monkey = this.add.image(40, 55, 'monkey').setInteractive({useHandCursor: true});
+        this.monkey.on('pointerdown', this.onMonkey, this);
+    }
+
+    onMonkey() {
+        if (!this.warrior1 || this.warrior1.state == 'dying' || !this.tempEnemy || this.tempEnemy.state == 'dying') this.scene.restart();
+        else {
+            if (!this.warrior1.player) {
+                this.setAsPlayer(this.warrior1);
+                this.time.delayedCall(800, this.instructions.setVisible, [true], this.instructions);
+                this.instructions.alpha = 0;
+                this.tweens.add({
+                    targets: this.instructions,
+                    alpha: 1,
+                    duration: 200,
+                    delay: 800
+                })
+            }
+            else {
+                this.warrior1.player = 0;
+                this.time.delayedCall(1000, this.instructions.setVisible, [false], this.instructions)
+                this.tweens.add({
+                    targets: this.instructions,
+                    alpha: 0,
+                    duration: 200, 
+                    delay: 800
+                })
+                ;
+            }
+            let bodyPos = this.warrior1.bodyPosition();
+            this.glow(bodyPos.x, bodyPos.y);
+        }
+    }
+
+    glow(x, y) {
+        const glow = this.add.image(x, y, 'shadow');
+        this.bgLayer.add(glow);
+        this.tweens.add({
+            targets: glow,
+            scale: {from: 2, to: 4},
+            alpha: {from: 1, to: 0.3},
+            duration: 300,
+            ease: 'Quad.easeOut',
+            onComplete: () => {glow.destroy()}
+        })
     }
 
     createEntity(x, y, entityType, side) {
@@ -135,7 +185,7 @@ export default class Arena extends Phaser.Scene {
         return e;
     }
 
-    setAsPlayer(who, number) {
+    setAsPlayer(who, number = 1) {
         //set an entity as controlled by player 1 or 2
         if (number == 1) this.player = who;
         this['player'+number] = who;
@@ -263,7 +313,7 @@ export default class Arena extends Phaser.Scene {
         const tooLeft = bodyPos.x >= 0 ? 0 : -bodyPos.x;
         const tooRight = bodyPos.x <= this.preloader.gameSize.x ? 0 : this.preloader.gameSize.x - bodyPos.x;
         if (tooLeft || tooRight) {
-            console.log('entity at '+bodyPos.x+' out of the world bounds. gamesize x '+this.preloader.gameSize.x);
+            //console.log('entity at '+bodyPos.x+' out of the world bounds. gamesize x '+this.preloader.gameSize.x);
             entity.setPosition(entity.x + tooRight + tooLeft, entity.y);
             //entity.skel.updateSize();
         }
@@ -315,7 +365,7 @@ export default class Arena extends Phaser.Scene {
     }
 
     resolveBlock(attacker, defender) {
-        console.log('blocked!');
+        //console.log('blocked!');
         //this.sparkEmitter.explode(10, (attacker.x + defender.x) *0.5, attacker.y - 100);
         this.sparkAnimation((attacker.bodyPosition().x + defender.x) *0.5, attacker.y - 130, 'block')
     }
@@ -335,7 +385,7 @@ export default class Arena extends Phaser.Scene {
 
     woundPosition(hitType, defender) {
         //either at the bottom of the body, or at the neck
-        console.log('woundPosition '+hitType)
+        //console.log('woundPosition '+hitType)
         const bodyPos = defender.bodyPosition();
         const headPos = defender.headPosition();
         let defPos = (hitType == 2 ? bodyPos 
@@ -406,7 +456,7 @@ export default class Arena extends Phaser.Scene {
     }
 
     spillBlood(x, y, n) {
-        console.log('spill Blood '+x+','+y);
+        //console.log('spill Blood '+x+','+y);
         
         const bloodStream = this.add.particles('blood');
         const wound = this.add.image(x, y, 'blood');
@@ -441,7 +491,7 @@ export default class Arena extends Phaser.Scene {
 
     checkEnd() {
         if (this.end) {
-            this.time.delayedCall(2500, this.cameras.main.fadeOut, [200], this.cameras.main)
+            //this.time.delayedCall(2500, this.cameras.main.fadeOut, [200], this.cameras.main)
         }
     }
 

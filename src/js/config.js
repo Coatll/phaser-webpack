@@ -1,7 +1,8 @@
 export default {
     "language" : "en-US",
-    "allowLandscapeMode" : true,
+    "allowDifferentOrientation" : true,
     "useAtlases" : false,
+    "veryClose" : 40,
 
     "attackTypes" : {
         "shield": ['attack1', 'attack2', 'attackShield', 'attackClose'] //attackType 1,2,3,4

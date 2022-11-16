@@ -51,7 +51,7 @@ export default class EntityStatusBar extends Phaser.GameObjects.Image {
     }
 
     showHealthPoints(h) {
-        console.log('show health points '+ h)
+        //console.log('show health points '+ h)
         this.circles.forEach((circle, i) => {
             circle.setTint(i < h ? 0xdd0000 : 0x660000); 
         })

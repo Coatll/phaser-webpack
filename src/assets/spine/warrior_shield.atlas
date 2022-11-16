@@ -60,18 +60,18 @@ breechCloth1b
   orig: 24, 62
   offset: 0, 0
   index: -1
-bodyMan1a
-  rotate: false
-  xy: 1, 300
-  size: 38, 55
-  orig: 38, 55
-  offset: 0, 0
-  index: -1
 bodyMan2a
   rotate: false
   xy: 213, 250
   size: 36, 54
   orig: 36, 54
+  offset: 0, 0
+  index: -1
+bodyMan1a
+  rotate: false
+  xy: 1, 300
+  size: 38, 55
+  orig: 38, 55
   offset: 0, 0
   index: -1
 vzzum
@@ -109,18 +109,18 @@ hand1a
   orig: 20, 19
   offset: 0, 0
   index: -1
-weapon1
-  rotate: false
-  xy: 114, 302
-  size: 97, 21
-  orig: 97, 21
-  offset: 0, 0
-  index: -1
 weapon2
   rotate: false
   xy: 1, 357
   size: 104, 19
   orig: 104, 19
+  offset: 0, 0
+  index: -1
+weapon1
+  rotate: false
+  xy: 114, 302
+  size: 97, 21
+  orig: 97, 21
   offset: 0, 0
   index: -1
 necklace2
@@ -137,11 +137,11 @@ necklace1
   orig: 47, 31
   offset: 0, 0
   index: -1
-headMan2a
+headMan2c
   rotate: false
-  xy: 1, 90
-  size: 102, 102
-  orig: 102, 102
+  xy: 105, 170
+  size: 55, 78
+  orig: 55, 78
   offset: 0, 0
   index: -1
 headMan1a
@@ -151,13 +151,6 @@ headMan1a
   orig: 86, 84
   offset: 0, 0
   index: -1
-headMan2c
-  rotate: false
-  xy: 105, 170
-  size: 55, 78
-  orig: 55, 78
-  offset: 0, 0
-  index: -1
 headMan1c
   rotate: false
   xy: 162, 170
@@ -165,25 +158,18 @@ headMan1c
   orig: 53, 78
   offset: 0, 0
   index: -1
+headMan2a
+  rotate: false
+  xy: 1, 90
+  size: 102, 102
+  orig: 102, 102
+  offset: 0, 0
+  index: -1
 blinkMale
   rotate: false
   xy: 90, 306
   size: 16, 7
   orig: 16, 7
-  offset: 0, 0
-  index: -1
-helm1a
-  rotate: false
-  xy: 1, 194
-  size: 74, 48
-  orig: 74, 48
-  offset: 0, 0
-  index: -1
-helm2c
-  rotate: false
-  xy: 155, 1
-  size: 99, 81
-  orig: 99, 81
   offset: 0, 0
   index: -1
 helm2a
@@ -198,6 +184,20 @@ helm1c
   xy: 114, 250
   size: 56, 50
   orig: 56, 50
+  offset: 0, 0
+  index: -1
+helm2c
+  rotate: false
+  xy: 155, 1
+  size: 99, 81
+  orig: 99, 81
+  offset: 0, 0
+  index: -1
+helm1a
+  rotate: false
+  xy: 1, 194
+  size: 74, 48
+  orig: 74, 48
   offset: 0, 0
   index: -1
 hand1b

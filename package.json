@@ -12,17 +12,14 @@
     "type": "git",
     "url": "git+https://github.com/sebsowter/phaser-webpack.git"
   },
-  "author": "Seb Sowter",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/sebsowter/phaser-webpack/issues"
-  },
+  "author": "Jiri Sojka",
+  "license": "",
   "babel": {
     "presets": [
       "@babel/preset-env"
     ]
   },
-  "homepage": "https://github.com/sebsowter/phaser-webpack#readme",
+  "homepage": "/gms/mixtec/",
   "devDependencies": {
     "@babel/core": "^7.17.5",
     "@babel/preset-env": "^7.16.11",

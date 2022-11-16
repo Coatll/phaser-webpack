@@ -21,19 +21,24 @@ export default class Preloader extends Phaser.Scene {
         this.load.multiatlas('atlas', 'atlas.json');
         this.load.multiatlas('atlas2', 'atlas2.json');*/
 
-        this.load.setPath('../../assets/images/');
+        this.load.baseURL = 'assets/images/';
+
         this.load.image('block', 'block1.png');
         this.load.image('circle', 'circle1.png');
-        this.load.image('shadow', 'shadow1.png');
+        this.load.image('shadow', 'glow.png');
         this.load.image('spark', 'spark.png');
         this.load.image('blood', 'blood.png');
+        this.load.image('monkey', 'monkey.png');
+        this.load.image('instructions', 'instructions.png');
     }
 
     create() {
-        this.orientationAngle = 0;
-        if (configData['allowLandscapeMode']) {
+        /*this.orientationAngle = 0;
+        if (configData['allowDifferentOrientation']) {
             this.testOrientation();
-        }
+        }*/
+        this.testOrientation();
+        this.scale.on('orientationchange', this.testOrientation, this);
 
         //loadBoneAnims();
         this.startGame();
@@ -55,8 +60,7 @@ export default class Preloader extends Phaser.Scene {
         //this.pads = this.scene.add('Pads', Pads, true, {x: 0, y: 0});
         this.startArena();
 
-        /* //already in arena.js:
-        if (configData['allowLandscapeMode']) {
+        /*if (configData['allowDifferentOrientation']) {
           this.scale.on('orientationchange', (ori) => {
               this.blockScreen((ori == Phaser.Scale.LANDSCAPE) != this.isLandscape(), this.angleOfOrientation(ori))
           })
@@ -75,19 +79,19 @@ export default class Preloader extends Phaser.Scene {
         //console.log(this.texts)
     }
 
-  screenSize() {
+  /*screenSize() {
       const screenW = this.scale.parent.clientWidth;
       const screenH = this.scale.parent.clientHeight;
       const size = {x: screenW, y: screenH};
       return size;
-  }
+  }*/
 
   //-----------------------------------resizing------------------------------------------
 
-  /* //already in arena.js:
-  blockScreen(value, angle) {
+  
+  blockScreen(value) {
     //block (true) or unblock (false)
-    console.log('blockScreen '+angle);
+    console.log('blockScreen '+value);
     if (value) {
         document.getElementById('phaser-game').style.visibility = 'hidden';
         document.getElementById('change-orientation').style.visibility = 'visible';
@@ -95,9 +99,9 @@ export default class Preloader extends Phaser.Scene {
         document.getElementById('phaser-game').style.visibility = 'visible';
         document.getElementById('change-orientation').style.visibility = 'hidden';
     }
-  }*/
+  }
 
-  angleOfOrientation(ori) {
+  /*angleOfOrientation(ori) {
     let angle = 0;
     switch(ori) {
         case 'landscape-primary': angle = 90; break;
@@ -109,11 +113,21 @@ export default class Preloader extends Phaser.Scene {
   }
 
   isLandscape() {
-      if (!configData['allowLandscapeMode']) return false;
+      if (!configData['allowDifferentOriantation']) return false;
       return Math.abs(this.orientationAngle) == 90;
-  }
+  }*/
 
   testOrientation() {
+    const ori = this.scale.orientation;
+    console.log('orientation '+ori)
+    if (ori === Phaser.Scale.PORTRAIT) {
+        this.blockScreen(true);
+    } else if (ori === Phaser.Scale.LANDSCAPE) {
+        this.blockScreen(false);
+    }
+  }
+
+  /*testOrientation() {
     //test orientation
     const ori = this.scale.orientation; //screen.msOrientation || screen.mozOrientation || (screen.orientation || {}).type;
     //this.scale.lockOrientation(ori); //lock the orientation to its initial state
@@ -123,7 +137,7 @@ export default class Preloader extends Phaser.Scene {
     if (dif == 0) return; //nothing to change
     //this.reorientAll(dif);
     this.orientationAngle += dif;
-}
+    }*/
 
   //-------------------------
 
