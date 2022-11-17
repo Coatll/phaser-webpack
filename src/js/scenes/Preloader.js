@@ -57,14 +57,19 @@ export default class Preloader extends Phaser.Scene {
         //console.log('startGame');
         this.gameSize = {x: this.game.scale.width, y: this.game.scale.height};
         this.lang();
-        //this.pads = this.scene.add('Pads', Pads, true, {x: 0, y: 0});
-        this.startArena();
 
-        /*if (configData['allowDifferentOrientation']) {
-          this.scale.on('orientationchange', (ori) => {
-              this.blockScreen((ori == Phaser.Scale.LANDSCAPE) != this.isLandscape(), this.angleOfOrientation(ori))
-          })
-        }*/
+        this.monkey = this.add.image(this.gameSize.x * 0.5, this.gameSize.y * 0.5, 'monkey').setInteractive({useHandCursor: true});
+        this.monkey.on('pointerdown', this.onMonkey, this);
+        this.text1 = this.add.text(this.monkey.x -30, this.monkey.y + 46, 'Play', { font: "30px Arial", fill: "#999999", align: "center" });
+        //this.startArena();
+
+    }
+
+    onMonkey() {
+        if (!this.scale.isFullscreen) this.scale.startFullscreen();
+        this.monkey.destroy();
+        this.text1.destroy();
+        this.startArena();
     }
 
     lang() {
